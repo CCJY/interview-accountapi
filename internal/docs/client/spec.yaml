@@ -128,6 +128,17 @@ paths:
           description: Conflict
 components:
   schemas:
+    Links:
+      type: object
+      properties:
+        first:
+          type: string
+        last:
+          type: string
+        prev:
+          type: string
+        self:
+          type: string
     PageFilter:
       type: object
       properties:
@@ -161,6 +172,9 @@ components:
           items:
             type: object
             $ref: "#/components/schemas/AccountData"
+        links:
+          type: object
+          $ref: "#/components/schemas/Links"
         error_message:
           type: string
     ResponseData:
@@ -168,6 +182,9 @@ components:
       properties:
         data:
           $ref: "#/components/schemas/AccountData"
+        links:
+          type: object
+          $ref: "#/components/schemas/Links"
         error_message:
           type: string
     RequestData:

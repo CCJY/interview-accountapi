@@ -211,6 +211,14 @@ type Filters struct {
 	Iban          *string `json:"iban,omitempty"`
 }
 
+// Links defines model for Links.
+type Links struct {
+	First *string `json:"first,omitempty"`
+	Last  *string `json:"last,omitempty"`
+	Prev  *string `json:"prev,omitempty"`
+	Self  *string `json:"self,omitempty"`
+}
+
 // PageFilter defines model for PageFilter.
 type PageFilter struct {
 	// Page number being requested, defaults to 0.
@@ -235,12 +243,14 @@ type RequestData struct {
 type ResponseData struct {
 	Data         *AccountData `json:"data,omitempty"`
 	ErrorMessage *string      `json:"error_message,omitempty"`
+	Links        *Links       `json:"links,omitempty"`
 }
 
 // ResponseDataArray defines model for ResponseDataArray.
 type ResponseDataArray struct {
 	Data         *[]AccountData `json:"data,omitempty"`
 	ErrorMessage *string        `json:"error_message,omitempty"`
+	Links        *Links         `json:"links,omitempty"`
 }
 
 // GetAccountAllParams defines parameters for GetAccountAll.
