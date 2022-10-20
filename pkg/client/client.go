@@ -233,11 +233,15 @@ type RequestData struct {
 
 // ResponseData defines model for ResponseData.
 type ResponseData struct {
-	Data *AccountData `json:"data,omitempty"`
+	Data         *AccountData `json:"data,omitempty"`
+	ErrorMessage *string      `json:"error_message,omitempty"`
 }
 
 // ResponseDataArray defines model for ResponseDataArray.
-type ResponseDataArray = []AccountData
+type ResponseDataArray struct {
+	Data         *[]AccountData `json:"data,omitempty"`
+	ErrorMessage *string        `json:"error_message,omitempty"`
+}
 
 // GetAccountAllParams defines parameters for GetAccountAll.
 type GetAccountAllParams struct {

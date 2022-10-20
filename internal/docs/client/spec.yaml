@@ -128,8 +128,6 @@ paths:
           description: Conflict
 components:
   schemas:
-    ErrorMessage:
-      type: string
     PageFilter:
       type: object
       properties:
@@ -156,15 +154,22 @@ components:
           type: string
 
     ResponseDataArray:
-      type: array
-      items:
-        type: object
-        $ref: "#/components/schemas/AccountData"
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            $ref: "#/components/schemas/AccountData"
+        error_message:
+          type: string
     ResponseData:
       type: object
       properties:
         data:
           $ref: "#/components/schemas/AccountData"
+        error_message:
+          type: string
     RequestData:
       type: object
       properties:
