@@ -1,0 +1,357 @@
+openapi: "3.0.2"
+info:
+  title: API Title
+  version: "1.0"
+servers:
+  - url: http://192.168.137.45:8080/v1
+
+paths:
+  /organisation/accounts:
+    get:
+      operationId: GetAccountAll
+      description: List accounts with the ability to filter and paginate. All accounts that match all filter criteria will be returned (combinations of filters act as AND expressions). Multiple values can be set for filters in CSV format, e.g. filter[country]=GB,FR,DE.
+      parameters:
+        - name: filter
+          in: query
+          style: deepObject
+          explode: true
+          description: Options for filtering the results
+          required: false
+          schema:
+            $ref: "#/components/schemas/Filters"
+        - name: page
+          in: query
+          style: deepObject
+          explode: true
+          description: Options for filtering the results
+          required: false
+          schema:
+            $ref: "#/components/schemas/PageFilter"
+
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseDataArray"
+    post:
+      summary: Create a account by ID.
+      operationId: "CreateAccount"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RequestData"
+
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseData"
+
+  /organisation/accounts/{account_id}:
+    get:
+      summary: Fetch a single Account resource using the resource ID.
+      operationId: GetAccountById
+      parameters:
+        - name: account_id
+          in: path
+          description: ID of the Account resource to fetch.
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseData"
+    # patch:
+    #   summary: Update an Account resource using the resource ID.
+    #   operationId: UpdateAccountById
+    #   parameters:
+    #     - name: account_id
+    #       in: path
+    #       description: ID of the Account resource to update.
+    #       required: true
+    #       schema:
+    #         type: string
+    #   requestBody:
+    #     required: true
+    #     content:
+    #       application/json:
+    #         schema:
+    #           oneOf:
+    #             - $ref: "#/components/schemas/RequestData"
+    #             - $ref: "#/components/schemas/ErrorMessage"
+    #   responses:
+    #     "200":
+    #       description: OK
+    #       content:
+    #         application/json:
+    #           schema:
+    #             type: array
+    #             properties:
+    #               data:
+    #                 type: object
+    #             items:
+    #               type: object
+    #               $ref: "#/components/schemas/ResponseData"
+    delete:
+      summary: Delete an Account resource using the resource ID and the current version number.
+      operationId: DeleteAccountByIdAndVersion
+      parameters:
+        - name: account_id
+          in: path
+          description: ID of the Account resource to delete.
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: query
+          description: Current version number of the Account resource.
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+        "409":
+          description: Conflict
+components:
+  schemas:
+    ErrorMessage:
+      type: string
+    PageFilter:
+      type: object
+      properties:
+        number:
+          type: integer
+          description: Page number being requested, defaults to 0.
+        size:
+          type: integer
+          description: Size of the page being requested, defaults to 100.
+    Filters:
+      type: object
+      properties:
+        account_number:
+          type: string
+        bank_id:
+          type: string
+        bank_id_code:
+          type: string
+        country:
+          type: string
+        customer_id:
+          type: string
+        iban:
+          type: string
+
+    ResponseDataArray:
+      type: array
+      items:
+        type: object
+        $ref: "#/components/schemas/AccountData"
+    ResponseData:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/AccountData"
+    RequestData:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/AccountData"
+    AccountData:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique account id of the account
+        organisation_id:
+          type: string
+          format: uuid
+          description: Unique organisation id of the account
+        type:
+          type: string
+          description: type of the account
+        version:
+          type: integer
+          format: int64
+          description: version of the account
+        attributes:
+          type: object
+          $ref: "#/components/schemas/AccountAttributes"
+        relationships:
+          type: object
+          $ref: "#/components/schemas/Relationships"
+    AccountAttributes:
+      type: object
+      required:
+        - bank_id
+        - bank_id_code
+        - bic
+        - country
+      properties:
+        bank_id:
+          type: string
+          description: Local country bank identifier, must be a UK sort code.
+          pattern: ^.\d{6,11}$
+        bank_id_code:
+          type: string
+          description: Identifies the type of bank ID being used, must be GBDSC.
+          example:
+            value: GBDSC
+            description: The ID in bank_id is a UK sort code.
+        bic:
+          type: string
+          description: SWIFT BIC in either 8 or 11 character format.
+          minimum: 8
+          maximum: 11
+        country:
+          type: string
+          description: ISO 3166-1 code  used to identify the domicile of the account. Must be GB
+          example:
+            value: GB
+            description: The account is a UK account.
+        acceptance_qualifier:
+          type: string
+          enum:
+            - after_next_working_day
+            - next_calendar_day
+            - next_working_day
+            - same_day
+            - some_other_time
+          description: Determines the qualifier code with which payments to the account are accepted. If not provided, payments are accepted by default with 0000 (accepted without qualification).
+        account_classification:
+          type: string
+          description: Classification of account, can be either Personal or Business. Defaults to Personal if not provided. Only used for Confirmation of Payee.
+          enum:
+            - Business
+            - Personal
+        account_number:
+          type: string
+          description: A unique account number will be generated automatically if not provided. If provided, the account number is validated to ensure there's no duplicate. It does not undergo an MOD check.
+        alternative_names:
+          description: Alternative primary account names, up to 3 alternative account names with one name in each line of the array. Only used for Confirmation of Payee.
+          type: array
+          maximum: 3
+          items:
+            type: string
+            maximum: 140
+        base_currency:
+          type: string
+          description: ISO 4217 code  used to identify the base currency of the account. Must be GBP.
+          enum:
+            - GBP
+        customer_id:
+          type: string
+          description: A free-format reference that can be used to link this account to an external system.
+        iban:
+          type: string
+          description: IBAN of the account. Generated if not provided.
+        joint_account:
+          type: boolean
+          description: Flag to indicate if the account is a joint account, set to true if this is a joint account. Defaults to false if not provided. Only used for Confirmation of Payee.
+          default: false
+        name:
+          description: |
+            Name of the account holder, up to four lines possible.
+
+            For Confirmation of Payee, the following rules apply:
+            * Must be the primary account name.
+            * For concatenated personal names, joint account names and organisation names, use the first line.
+            * If first and last names of a personal name are separated, use the first line for first names, the second line for last names.
+            * Titles are ignored and should not be entered."
+          type: array
+          maximum: 4
+          items:
+            type: string
+            maximum: 140
+        name_matching_status:
+          type: string
+          description: Describes the status of the account for name matching via Confirmation of Payee. The value determines the code with which Form3 responds to matched Confirmation of Payee requests to this account.
+          enum:
+            - not_supported
+            - opted_out
+            - supported
+            - switched
+        reference_mask:
+          type: string
+          description: |
+            Mask to use when validating the reference field of inbound payments to the account. Payments without matching reference fields will be rejected.
+
+            Matching rules:
+            * ? matches any character.
+            * # matches any character.
+            * $ matches any character.
+            * All other characters are literals. \ can be used to escape control characters to literals.
+            * Maximum length 35 characters.
+            * - and space characters are ignored in the reference when matching.
+        secondary_identification:
+          type: string
+          description: Additional information to identify the account and account holder, 140 characters max. Can be any type of additional identification, e.g. a building society roll number. Only used for Confirmation of Payee.
+        user_defined_data:
+          type: string
+          description: |
+            All-purpose field for storing data related to the account.
+            If provided, this array will be copied into each Payment Admission resource relationship where this account is the beneficiary.
+        validation_type:
+          type: string
+          description: Determines if modcheck validations are carried out on inbound payments to the account. Only card is allowed if provided.
+          enum:
+            - card
+        status:
+          type: string
+          description: Status of the account. pending and confirmed are set by Form3, closed can be set manually.
+          enum:
+            - closed
+            - confirmed
+            - pending
+        status_reason:
+          type: string
+          description: Additional account status information, required when updating status to closed, can't be used otherwise. The FPS code with which inbound payments to the account will be rejected depends on the value of this field.
+          enum:
+            - beneficiary_sensitivities
+            - business_reasons
+            - closed
+            - currency
+            - deceased
+            - stopped
+            - terms_and_conditions
+            - transferred
+
+    Relationships:
+      type: object
+      properties:
+        account_events:
+          type: object
+          $ref: "#/components/schemas/AccountEvents"
+
+    AccountEvents:
+      type: object
+      description: The Account Event resources related to this account. 2 Account Event resource are created when the Account resource is created.
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            $ref: "#/components/schemas/AccountEventsData"
+    AccountEventsData:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID of the Account Event resource.
+        type:
+          type: string
+          description: The type of resource. Always 'account_events'.
