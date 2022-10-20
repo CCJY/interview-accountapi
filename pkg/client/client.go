@@ -214,10 +214,10 @@ type Filters struct {
 // PageFilter defines model for PageFilter.
 type PageFilter struct {
 	// Page number being requested, defaults to 0.
-	Number *int `json:"number,omitempty"`
+	Number *string `json:"number,omitempty"`
 
 	// Size of the page being requested, defaults to 100.
-	Size *int `json:"size,omitempty"`
+	Size *string `json:"size,omitempty"`
 }
 
 // Relationships defines model for Relationships.

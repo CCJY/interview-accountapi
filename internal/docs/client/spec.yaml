@@ -132,10 +132,10 @@ components:
       type: object
       properties:
         number:
-          type: integer
+          type: string
           description: Page number being requested, defaults to 0.
         size:
-          type: integer
+          type: string
           description: Size of the page being requested, defaults to 100.
     Filters:
       type: object

@@ -124,8 +124,8 @@ func TestUrlWithFilter(t *testing.T) {
 				server: serverUrl,
 				params: &GetAccountAllParams{
 					Page: &PageFilter{
-						Number: lo.ToPtr(10),
-						Size:   lo.ToPtr(5),
+						Number: lo.ToPtr("10"),
+						Size:   lo.ToPtr("5"),
 					},
 				},
 			},
@@ -146,8 +146,8 @@ func TestUrlWithFilter(t *testing.T) {
 				server: serverUrl,
 				params: &GetAccountAllParams{
 					Page: &PageFilter{
-						Number: lo.ToPtr(10),
-						Size:   lo.ToPtr(5),
+						Number: lo.ToPtr("10"),
+						Size:   lo.ToPtr("5"),
 					},
 					Filter: &Filters{
 						AccountNumber: lo.ToPtr("efaef"),
