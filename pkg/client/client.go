@@ -4,17 +4,16 @@
 package client
 
 import (
-	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
 
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
+	"github.com/go-resty/resty/v2"
+
 	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
 )
 
@@ -174,7 +173,7 @@ type AccountData struct {
 	Attributes *AccountAttributes `json:"attributes,omitempty"`
 
 	// Unique account id of the account
-	Id *openapi_types.UUID `json:"id,omitempty"`
+	Id *openapi_types.UUID `json:"id,omitempty" tag1:"value1" tag2:"value2"`
 
 	// Unique organisation id of the account
 	OrganisationId *openapi_types.UUID `json:"organisation_id,omitempty"`
@@ -274,157 +273,24 @@ type DeleteAccountByIdAndVersionParams struct {
 // CreateAccountJSONRequestBody defines body for CreateAccount for application/json ContentType.
 type CreateAccountJSONRequestBody = CreateAccountJSONBody
 
-// RequestEditorFn  is the function signature for the RequestEditor callback function
-type RequestEditorFn func(ctx context.Context, req *http.Request) error
-
-// Doer performs HTTP requests.
-//
-// The standard http.Client implements this interface.
-type HttpRequestDoer interface {
-	Do(req *http.Request) (*http.Response, error)
-}
-
-// Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
-	// The endpoint of the server conforming to this interface, with scheme,
-	// https://api.deepmap.com for example. This can contain a path relative
-	// to the server, such as https://api.deepmap.com/dev-test, and all the
-	// paths in the swagger spec will be appended to the server.
 	Server string
-
-	// Doer for performing requests, typically a *http.Client with any
-	// customized settings, such as certificate chains.
-	Client HttpRequestDoer
-
-	// A list of callbacks for modifying requests which are generated before sending over
-	// the network.
-	RequestEditors []RequestEditorFn
+	Client resty.Client
 }
 
-// ClientOption allows setting custom parameters during construction
-type ClientOption func(*Client) error
+func New(url string) *Client {
+	client := resty.New().SetBaseURL(url)
 
-// Creates a new Client, with reasonable defaults
-func NewClient(server string, opts ...ClientOption) (*Client, error) {
-	// create a client with sane default values
-	client := Client{
-		Server: server,
+	return &Client{
+		Server: url,
+		Client: *client,
 	}
-	// mutate client and add all optional params
-	for _, o := range opts {
-		if err := o(&client); err != nil {
-			return nil, err
-		}
-	}
-	// ensure the server URL always has a trailing slash
-	if !strings.HasSuffix(client.Server, "/") {
-		client.Server += "/"
-	}
-	// create httpClient, if not already present
-	if client.Client == nil {
-		client.Client = &http.Client{}
-	}
-	return &client, nil
-}
-
-// WithHTTPClient allows overriding the default Doer, which is
-// automatically created using http.Client. This is useful for tests.
-func WithHTTPClient(doer HttpRequestDoer) ClientOption {
-	return func(c *Client) error {
-		c.Client = doer
-		return nil
-	}
-}
-
-// WithRequestEditorFn allows setting up a callback function, which will be
-// called right before sending the request. This can be used to mutate the request.
-func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
-	return func(c *Client) error {
-		c.RequestEditors = append(c.RequestEditors, fn)
-		return nil
-	}
-}
-
-// The interface specification for the client above.
-type ClientInterface interface {
-	// GetAccountAll request
-	GetAccountAll(ctx context.Context, params *GetAccountAllParams, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// CreateAccount request with any body
-	CreateAccountWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	CreateAccount(ctx context.Context, body CreateAccountJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// DeleteAccountByIdAndVersion request
-	DeleteAccountByIdAndVersion(ctx context.Context, accountId string, params *DeleteAccountByIdAndVersionParams, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// GetAccountById request
-	GetAccountById(ctx context.Context, accountId string, reqEditors ...RequestEditorFn) (*http.Response, error)
-}
-
-func (c *Client) GetAccountAll(ctx context.Context, params *GetAccountAllParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetAccountAllRequest(c.Server, params)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) CreateAccountWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateAccountRequestWithBody(c.Server, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) CreateAccount(ctx context.Context, body CreateAccountJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateAccountRequest(c.Server, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) DeleteAccountByIdAndVersion(ctx context.Context, accountId string, params *DeleteAccountByIdAndVersionParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewDeleteAccountByIdAndVersionRequest(c.Server, accountId, params)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) GetAccountById(ctx context.Context, accountId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetAccountByIdRequest(c.Server, accountId)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
 }
 
 // NewGetAccountAllRequest generates requests for GetAccountAll
-func NewGetAccountAllRequest(server string, params *GetAccountAllParams) (*http.Request, error) {
+func (c *Client) NewGetAccountAllRequest(server string, params *GetAccountAllParams) (*resty.Response, error) {
 	var err error
+	var req = c.Client.SetBaseURL(server).R()
 
 	serverURL, err := url.Parse(server)
 	if err != nil {
@@ -475,30 +341,20 @@ func NewGetAccountAllRequest(server string, params *GetAccountAllParams) (*http.
 
 	}
 
-	queryURL.RawQuery = queryValues.Encode()
+	req.SetQueryParamsFromValues(queryValues)
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
+	return req.Execute("GET", queryURL.String())
 }
 
 // NewCreateAccountRequest calls the generic CreateAccount builder with application/json body
-func NewCreateAccountRequest(server string, body CreateAccountJSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewCreateAccountRequestWithBody(server, "application/json", bodyReader)
+func (c *Client) NewCreateAccountRequest(server string, body CreateAccountJSONRequestBody) (*resty.Response, error) {
+	return c.NewCreateAccountRequestWithBody(server, "application/json", body)
 }
 
 // NewCreateAccountRequestWithBody generates requests for CreateAccount with any type of body
-func NewCreateAccountRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+func (c *Client) NewCreateAccountRequestWithBody(server string, contentType string, body interface{}) (*resty.Response, error) {
 	var err error
+	var req = c.Client.SetBaseURL(server).R()
 
 	serverURL, err := url.Parse(server)
 	if err != nil {
@@ -515,19 +371,17 @@ func NewCreateAccountRequestWithBody(server string, contentType string, body io.
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), body)
-	if err != nil {
-		return nil, err
-	}
+	req.SetBody(body)
 
-	req.Header.Add("Content-Type", contentType)
+	req.SetHeader("Content-Type", contentType)
 
-	return req, nil
+	return req.Execute("POST", queryURL.String())
 }
 
 // NewDeleteAccountByIdAndVersionRequest generates requests for DeleteAccountByIdAndVersion
-func NewDeleteAccountByIdAndVersionRequest(server string, accountId string, params *DeleteAccountByIdAndVersionParams) (*http.Request, error) {
+func (c *Client) NewDeleteAccountByIdAndVersionRequest(server string, accountId string, params *DeleteAccountByIdAndVersionParams) (*resty.Response, error) {
 	var err error
+	var req = c.Client.SetBaseURL(server).R()
 
 	var pathParam0 string
 
@@ -535,6 +389,7 @@ func NewDeleteAccountByIdAndVersionRequest(server string, accountId string, para
 	if err != nil {
 		return nil, err
 	}
+	req.SetPathParam("account_id", pathParam0)
 
 	serverURL, err := url.Parse(server)
 	if err != nil {
@@ -565,19 +420,15 @@ func NewDeleteAccountByIdAndVersionRequest(server string, accountId string, para
 		}
 	}
 
-	queryURL.RawQuery = queryValues.Encode()
+	req.SetQueryParamsFromValues(queryValues)
 
-	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
+	return req.Execute("DELETE", queryURL.String())
 }
 
 // NewGetAccountByIdRequest generates requests for GetAccountById
-func NewGetAccountByIdRequest(server string, accountId string) (*http.Request, error) {
+func (c *Client) NewGetAccountByIdRequest(server string, accountId string) (*resty.Response, error) {
 	var err error
+	var req = c.Client.SetBaseURL(server).R()
 
 	var pathParam0 string
 
@@ -585,6 +436,7 @@ func NewGetAccountByIdRequest(server string, accountId string) (*http.Request, e
 	if err != nil {
 		return nil, err
 	}
+	req.SetPathParam("account_id", pathParam0)
 
 	serverURL, err := url.Parse(server)
 	if err != nil {
@@ -601,82 +453,19 @@ func NewGetAccountByIdRequest(server string, accountId string) (*http.Request, e
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
-	for _, r := range c.RequestEditors {
-		if err := r(ctx, req); err != nil {
-			return err
-		}
-	}
-	for _, r := range additionalEditors {
-		if err := r(ctx, req); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// ClientWithResponses builds on ClientInterface to offer response payloads
-type ClientWithResponses struct {
-	ClientInterface
-}
-
-// NewClientWithResponses creates a new ClientWithResponses, which wraps
-// Client with return type handling
-func NewClientWithResponses(server string, opts ...ClientOption) (*ClientWithResponses, error) {
-	client, err := NewClient(server, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return &ClientWithResponses{client}, nil
-}
-
-// WithBaseURL overrides the baseURL.
-func WithBaseURL(baseURL string) ClientOption {
-	return func(c *Client) error {
-		newBaseURL, err := url.Parse(baseURL)
-		if err != nil {
-			return err
-		}
-		c.Server = newBaseURL.String()
-		return nil
-	}
-}
-
-// ClientWithResponsesInterface is the interface specification for the client with responses above.
-type ClientWithResponsesInterface interface {
-	// GetAccountAll request
-	GetAccountAllWithResponse(ctx context.Context, params *GetAccountAllParams, reqEditors ...RequestEditorFn) (*GetAccountAllResponse, error)
-
-	// CreateAccount request with any body
-	CreateAccountWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateAccountResponse, error)
-
-	CreateAccountWithResponse(ctx context.Context, body CreateAccountJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateAccountResponse, error)
-
-	// DeleteAccountByIdAndVersion request
-	DeleteAccountByIdAndVersionWithResponse(ctx context.Context, accountId string, params *DeleteAccountByIdAndVersionParams, reqEditors ...RequestEditorFn) (*DeleteAccountByIdAndVersionResponse, error)
-
-	// GetAccountById request
-	GetAccountByIdWithResponse(ctx context.Context, accountId string, reqEditors ...RequestEditorFn) (*GetAccountByIdResponse, error)
+	return req.Execute("GET", queryURL.String())
 }
 
 type GetAccountAllResponse struct {
 	Body         []byte
-	HTTPResponse *http.Response
+	HTTPResponse *resty.Response
 	JSON200      *ResponseDataArray
 }
 
 // Status returns HTTPResponse.Status
 func (r GetAccountAllResponse) Status() string {
 	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
+		return r.HTTPResponse.Status()
 	}
 	return http.StatusText(0)
 }
@@ -684,21 +473,21 @@ func (r GetAccountAllResponse) Status() string {
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetAccountAllResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
+		return r.HTTPResponse.StatusCode()
 	}
 	return 0
 }
 
 type CreateAccountResponse struct {
 	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *ResponseData
+	HTTPResponse *resty.Response
+	JSON201      *ResponseData
 }
 
 // Status returns HTTPResponse.Status
 func (r CreateAccountResponse) Status() string {
 	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
+		return r.HTTPResponse.Status()
 	}
 	return http.StatusText(0)
 }
@@ -706,20 +495,20 @@ func (r CreateAccountResponse) Status() string {
 // StatusCode returns HTTPResponse.StatusCode
 func (r CreateAccountResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
+		return r.HTTPResponse.StatusCode()
 	}
 	return 0
 }
 
 type DeleteAccountByIdAndVersionResponse struct {
 	Body         []byte
-	HTTPResponse *http.Response
+	HTTPResponse *resty.Response
 }
 
 // Status returns HTTPResponse.Status
 func (r DeleteAccountByIdAndVersionResponse) Status() string {
 	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
+		return r.HTTPResponse.Status()
 	}
 	return http.StatusText(0)
 }
@@ -727,21 +516,21 @@ func (r DeleteAccountByIdAndVersionResponse) Status() string {
 // StatusCode returns HTTPResponse.StatusCode
 func (r DeleteAccountByIdAndVersionResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
+		return r.HTTPResponse.StatusCode()
 	}
 	return 0
 }
 
 type GetAccountByIdResponse struct {
 	Body         []byte
-	HTTPResponse *http.Response
+	HTTPResponse *resty.Response
 	JSON200      *ResponseData
 }
 
 // Status returns HTTPResponse.Status
 func (r GetAccountByIdResponse) Status() string {
 	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
+		return r.HTTPResponse.Status()
 	}
 	return http.StatusText(0)
 }
@@ -749,14 +538,14 @@ func (r GetAccountByIdResponse) Status() string {
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetAccountByIdResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
+		return r.HTTPResponse.StatusCode()
 	}
 	return 0
 }
 
 // GetAccountAllWithResponse request returning *GetAccountAllResponse
-func (c *ClientWithResponses) GetAccountAllWithResponse(ctx context.Context, params *GetAccountAllParams, reqEditors ...RequestEditorFn) (*GetAccountAllResponse, error) {
-	rsp, err := c.GetAccountAll(ctx, params, reqEditors...)
+func (c *Client) GetAccountAllWithResponse(server string, params *GetAccountAllParams) (*GetAccountAllResponse, error) {
+	rsp, err := c.NewGetAccountAllRequest(server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -764,16 +553,16 @@ func (c *ClientWithResponses) GetAccountAllWithResponse(ctx context.Context, par
 }
 
 // CreateAccountWithBodyWithResponse request with arbitrary body returning *CreateAccountResponse
-func (c *ClientWithResponses) CreateAccountWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateAccountResponse, error) {
-	rsp, err := c.CreateAccountWithBody(ctx, contentType, body, reqEditors...)
+func (c *Client) CreateAccountWithBodyWithResponse(server string, contentType string, body io.Reader) (*CreateAccountResponse, error) {
+	rsp, err := c.NewCreateAccountRequestWithBody(server, contentType, body)
 	if err != nil {
 		return nil, err
 	}
 	return ParseCreateAccountResponse(rsp)
 }
 
-func (c *ClientWithResponses) CreateAccountWithResponse(ctx context.Context, body CreateAccountJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateAccountResponse, error) {
-	rsp, err := c.CreateAccount(ctx, body, reqEditors...)
+func (c *Client) CreateAccountWithResponse(server string, body CreateAccountJSONRequestBody) (*CreateAccountResponse, error) {
+	rsp, err := c.NewCreateAccountRequest(server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -781,8 +570,8 @@ func (c *ClientWithResponses) CreateAccountWithResponse(ctx context.Context, bod
 }
 
 // DeleteAccountByIdAndVersionWithResponse request returning *DeleteAccountByIdAndVersionResponse
-func (c *ClientWithResponses) DeleteAccountByIdAndVersionWithResponse(ctx context.Context, accountId string, params *DeleteAccountByIdAndVersionParams, reqEditors ...RequestEditorFn) (*DeleteAccountByIdAndVersionResponse, error) {
-	rsp, err := c.DeleteAccountByIdAndVersion(ctx, accountId, params, reqEditors...)
+func (c *Client) DeleteAccountByIdAndVersionWithResponse(server string, accountId string, params *DeleteAccountByIdAndVersionParams) (*DeleteAccountByIdAndVersionResponse, error) {
+	rsp, err := c.NewDeleteAccountByIdAndVersionRequest(server, accountId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -790,8 +579,8 @@ func (c *ClientWithResponses) DeleteAccountByIdAndVersionWithResponse(ctx contex
 }
 
 // GetAccountByIdWithResponse request returning *GetAccountByIdResponse
-func (c *ClientWithResponses) GetAccountByIdWithResponse(ctx context.Context, accountId string, reqEditors ...RequestEditorFn) (*GetAccountByIdResponse, error) {
-	rsp, err := c.GetAccountById(ctx, accountId, reqEditors...)
+func (c *Client) GetAccountByIdWithResponse(server string, accountId string) (*GetAccountByIdResponse, error) {
+	rsp, err := c.NewGetAccountByIdRequest(server, accountId)
 	if err != nil {
 		return nil, err
 	}
@@ -799,22 +588,17 @@ func (c *ClientWithResponses) GetAccountByIdWithResponse(ctx context.Context, ac
 }
 
 // ParseGetAccountAllResponse parses an HTTP response from a GetAccountAllWithResponse call
-func ParseGetAccountAllResponse(rsp *http.Response) (*GetAccountAllResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
+func ParseGetAccountAllResponse(rsp *resty.Response) (*GetAccountAllResponse, error) {
 	response := &GetAccountAllResponse{
-		Body:         bodyBytes,
+		Body:         rsp.Body(),
 		HTTPResponse: rsp,
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+
+	case strings.Contains(rsp.Header().Get("Content-Type"), "json") && rsp.StatusCode() == 200:
 		var dest ResponseDataArray
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := json.Unmarshal(rsp.Body(), &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -825,25 +609,20 @@ func ParseGetAccountAllResponse(rsp *http.Response) (*GetAccountAllResponse, err
 }
 
 // ParseCreateAccountResponse parses an HTTP response from a CreateAccountWithResponse call
-func ParseCreateAccountResponse(rsp *http.Response) (*CreateAccountResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
+func ParseCreateAccountResponse(rsp *resty.Response) (*CreateAccountResponse, error) {
 	response := &CreateAccountResponse{
-		Body:         bodyBytes,
+		Body:         rsp.Body(),
 		HTTPResponse: rsp,
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+
+	case strings.Contains(rsp.Header().Get("Content-Type"), "json") && rsp.StatusCode() == 201:
 		var dest ResponseData
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := json.Unmarshal(rsp.Body(), &dest); err != nil {
 			return nil, err
 		}
-		response.JSON200 = &dest
+		response.JSON201 = &dest
 
 	}
 
@@ -851,15 +630,9 @@ func ParseCreateAccountResponse(rsp *http.Response) (*CreateAccountResponse, err
 }
 
 // ParseDeleteAccountByIdAndVersionResponse parses an HTTP response from a DeleteAccountByIdAndVersionWithResponse call
-func ParseDeleteAccountByIdAndVersionResponse(rsp *http.Response) (*DeleteAccountByIdAndVersionResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
+func ParseDeleteAccountByIdAndVersionResponse(rsp *resty.Response) (*DeleteAccountByIdAndVersionResponse, error) {
 	response := &DeleteAccountByIdAndVersionResponse{
-		Body:         bodyBytes,
+		Body:         rsp.Body(),
 		HTTPResponse: rsp,
 	}
 
@@ -867,22 +640,17 @@ func ParseDeleteAccountByIdAndVersionResponse(rsp *http.Response) (*DeleteAccoun
 }
 
 // ParseGetAccountByIdResponse parses an HTTP response from a GetAccountByIdWithResponse call
-func ParseGetAccountByIdResponse(rsp *http.Response) (*GetAccountByIdResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
+func ParseGetAccountByIdResponse(rsp *resty.Response) (*GetAccountByIdResponse, error) {
 	response := &GetAccountByIdResponse{
-		Body:         bodyBytes,
+		Body:         rsp.Body(),
 		HTTPResponse: rsp,
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+
+	case strings.Contains(rsp.Header().Get("Content-Type"), "json") && rsp.StatusCode() == 200:
 		var dest ResponseData
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := json.Unmarshal(rsp.Body(), &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
