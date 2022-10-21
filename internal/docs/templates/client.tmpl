@@ -1,0 +1,163 @@
+
+
+type Client struct {
+	Server string
+	Client resty.Client
+}
+
+func New(url string) *Client {
+	client := resty.New().SetBaseURL(url)
+
+	return &Client{
+		Server: url,
+		Client: *client,
+	}
+}
+
+
+{{/* Generate request builders */}}
+{{range .}}
+{{$hasParams := .RequiresParamObject -}}
+{{$pathParams := .PathParams -}}
+{{$bodyRequired := .BodyRequired -}}
+{{$opid := .OperationId -}}
+
+{{range .Bodies}}
+// New{{$opid}}Request{{.Suffix}} calls the generic {{$opid}} builder with {{.ContentType}} body
+func (c *Client) New{{$opid}}Request{{.Suffix}}(server string{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody) (*resty.Response, error) {
+    return c.New{{$opid}}RequestWithBody(server{{genParamNames $pathParams}}{{if $hasParams}}, params{{end}}, "{{.ContentType}}", body)
+}
+{{end}}
+
+// New{{$opid}}Request{{if .HasBody}}WithBody{{end}} generates requests for {{$opid}}{{if .HasBody}} with any type of body{{end}}
+func (c *Client) New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body interface{}{{end}}) (*resty.Response, error) {
+    var err error
+    var req = c.Client.SetBaseURL(server).R()
+{{range $paramIdx, $param := .PathParams}}
+    var pathParam{{$paramIdx}} string
+    {{if .IsPassThrough}}
+    pathParam{{$paramIdx}} = {{.GoVariableName}}
+    {{end}}
+    {{if .IsJson}}
+    var pathParamBuf{{$paramIdx}} []byte
+    pathParamBuf{{$paramIdx}}, err = json.Marshal({{.GoVariableName}})
+    if err != nil {
+        return nil, err
+    }
+    pathParam{{$paramIdx}} = string(pathParamBuf{{$paramIdx}})
+    {{end}}
+    {{if .IsStyled}}
+    pathParam{{$paramIdx}}, err = runtime.StyleParamWithLocation("{{.Style}}", {{.Explode}}, "{{.ParamName}}", runtime.ParamLocationPath, {{.GoVariableName}})
+    if err != nil {
+        return nil, err
+    }
+    req.SetPathParam("account_id", pathParam{{$paramIdx}})
+    {{end}}
+{{end}}
+    serverURL, err := url.Parse(server)
+    if err != nil {
+        return nil, err
+    }
+
+    operationPath := fmt.Sprintf("{{genParamFmtString .Path}}"{{range $paramIdx, $param := .PathParams}}, pathParam{{$paramIdx}}{{end}})
+    if operationPath[0] == '/' {
+        operationPath = "." + operationPath
+    }
+
+    queryURL, err := serverURL.Parse(operationPath)
+    if err != nil {
+        return nil, err
+    }
+
+{{if .QueryParams}}
+    queryValues := queryURL.Query()
+{{range $paramIdx, $param := .QueryParams}}
+    {{if not .Required}} if params.{{.GoName}} != nil { {{end}}
+    {{if .IsPassThrough}}
+    queryValues.Add("{{.ParamName}}", {{if not .Required}}*{{end}}params.{{.GoName}})
+    {{end}}
+    {{if .IsJson}}
+    if queryParamBuf, err := json.Marshal({{if not .Required}}*{{end}}params.{{.GoName}}); err != nil {
+        return nil, err
+    } else {
+        queryValues.Add("{{.ParamName}}", string(queryParamBuf))
+    }
+
+    {{end}}
+    {{if .IsStyled}}
+    if queryFrag, err := runtime.StyleParamWithLocation("{{.Style}}", {{.Explode}}, "{{.ParamName}}", runtime.ParamLocationQuery, {{if not .Required}}*{{end}}params.{{.GoName}}); err != nil {
+        return nil, err
+    } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+       return nil, err
+    } else {
+       for k, v := range parsed {
+           for _, v2 := range v {
+               queryValues.Add(k, v2)
+           }
+       }
+    }
+    {{end}}
+    {{if not .Required}}}{{end}}
+{{end}}
+    req.SetQueryParamsFromValues(queryValues)
+{{end}}{{/* if .QueryParams */}}
+    {{if .HasBody}}
+    req.SetBody(body)
+    {{end}}
+
+    {{if .HasBody}}req.SetHeader("Content-Type", contentType){{end}}
+{{range $paramIdx, $param := .HeaderParams}}
+    {{if not .Required}} if params.{{.GoName}} != nil { {{end}}
+    var headerParam{{$paramIdx}} string
+    {{if .IsPassThrough}}
+    headerParam{{$paramIdx}} = {{if not .Required}}*{{end}}params.{{.GoName}}
+    {{end}}
+    {{if .IsJson}}
+    var headerParamBuf{{$paramIdx}} []byte
+    headerParamBuf{{$paramIdx}}, err = json.Marshal({{if not .Required}}*{{end}}params.{{.GoName}})
+    if err != nil {
+        return nil, err
+    }
+    headerParam{{$paramIdx}} = string(headerParamBuf{{$paramIdx}})
+    {{end}}
+    {{if .IsStyled}}
+    headerParam{{$paramIdx}}, err = runtime.StyleParamWithLocation("{{.Style}}", {{.Explode}}, "{{.ParamName}}", runtime.ParamLocationHeader, {{if not .Required}}*{{end}}params.{{.GoName}})
+    if err != nil {
+        return nil, err
+    }
+    {{end}}
+    req.SetHeader("{{.ParamName}}", headerParam{{$paramIdx}})
+    {{if not .Required}}}{{end}}
+{{end}}
+
+{{range $paramIdx, $param := .CookieParams}}
+    {{if not .Required}} if params.{{.GoName}} != nil { {{end}}
+    var cookieParam{{$paramIdx}} string
+    {{if .IsPassThrough}}
+    cookieParam{{$paramIdx}} = {{if not .Required}}*{{end}}params.{{.GoName}}
+    {{end}}
+    {{if .IsJson}}
+    var cookieParamBuf{{$paramIdx}} []byte
+    cookieParamBuf{{$paramIdx}}, err = json.Marshal({{if not .Required}}*{{end}}params.{{.GoName}})
+    if err != nil {
+        return nil, err
+    }
+    cookieParam{{$paramIdx}} = url.QueryEscape(string(cookieParamBuf{{$paramIdx}}))
+    {{end}}
+    {{if .IsStyled}}
+    cookieParam{{$paramIdx}}, err = runtime.StyleParamWithLocation("simple", {{.Explode}}, "{{.ParamName}}", runtime.ParamLocationCookie, {{if not .Required}}*{{end}}params.{{.GoName}})
+    if err != nil {
+        return nil, err
+    }
+    {{end}}
+    cookie{{$paramIdx}} := &http.Cookie{
+        Name:"{{.ParamName}}",
+        Value:cookieParam{{$paramIdx}},
+    }
+    req.SetCookie(cookie{{$paramIdx}})
+    {{if not .Required}}}{{end}}
+{{end}}
+    return req.Execute("{{.Method}}", queryURL.String())
+}
+
+{{end}}{{/* Range */}}
