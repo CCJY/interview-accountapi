@@ -46,8 +46,8 @@ paths:
               $ref: "#/components/schemas/RequestData"
 
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Created
           content:
             application/json:
               schema:
@@ -71,6 +71,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResponseData"
+
     # patch:
     #   summary: Update an Account resource using the resource ID.
     #   operationId: UpdateAccountById
@@ -199,6 +200,9 @@ components:
           type: string
           format: uuid
           description: Unique account id of the account
+          x-oapi-codegen-extra-tags:
+            tag1: value1
+            tag2: value2
         organisation_id:
           type: string
           format: uuid
