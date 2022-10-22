@@ -1,4 +1,31 @@
+type RFC3339NanoDate struct {
+	time.Time
+}
 
+const DateFormat = time.RFC3339Nano
+
+
+func (d RFC3339NanoDate) MarshalJSON() ([]byte, error) {
+	return json.Marshal(d.Time.Format(DateFormat))
+}
+
+func (d *RFC3339NanoDate) UnmarshalJSON(data []byte) error {
+	var dateStr string
+	err := json.Unmarshal(data, &dateStr)
+	if err != nil {
+		return err
+	}
+	parsed, err := time.Parse(DateFormat, dateStr)
+	if err != nil {
+		return err
+	}
+	d.Time = parsed
+	return nil
+}
+
+func (d RFC3339NanoDate) String() string {
+	return d.Time.Format(DateFormat)
+}
 
 type Client struct {
 	Server string
