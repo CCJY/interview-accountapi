@@ -1131,14 +1131,14 @@ func TestValidateDataAttributesStatusReason(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "Error, to use it, status should be close and status required #4",
+			name: "No Error #4",
 			data: func() *AccountData {
 				accountData := DefaultAccountData()
 				Status := AccountAttributesStatusClosed
 				accountData.Attributes.Status = &Status
 				return accountData
 			}(),
-			wantErr: true,
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
