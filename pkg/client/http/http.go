@@ -53,7 +53,6 @@ func (c *HttpClient) CreateAccountWithResponse(body *account_types.CreateAccount
 		return nil, err
 	}
 
-	fmt.Println(queryURL.String())
 	req.Header.Add("Content-Type", account_types.ContentType)
 
 	rsp, err := c.Client.Do(req)
