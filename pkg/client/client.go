@@ -1,7 +1,7 @@
 package client
 
 import (
-	account_types "github.com/ccjy/interview-accountapi/pkg/types/account/v1"
+	account_types "github.com/ccjy/interview-accountapi/pkg/types/account"
 )
 
 type ClientInterface interface {

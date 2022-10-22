@@ -1,4 +1,4 @@
-package v1
+package account
 
 const (
 	OperationPathCreateAccount string = "/v1/organisation/accounts"

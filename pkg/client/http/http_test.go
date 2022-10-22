@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"testing"
 
-	account_types "github.com/ccjy/interview-accountapi/pkg/types/account/v1"
+	account_types "github.com/ccjy/interview-accountapi/pkg/types/account"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"

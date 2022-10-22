@@ -1,4 +1,4 @@
-package v1
+package account
 
 import (
 	"github.com/google/uuid"

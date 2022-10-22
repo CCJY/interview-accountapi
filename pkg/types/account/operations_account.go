@@ -1,7 +1,11 @@
-package v1
+package account
 
 import (
 	"github.com/ccjy/interview-accountapi/pkg/types"
+)
+
+const (
+	ContentType string = "application/json"
 )
 
 type RequestData struct {

@@ -1,4 +1,4 @@
-package v1
+package account
 
 // Defines values for AccountAttributesAccountClassification.
 const (
