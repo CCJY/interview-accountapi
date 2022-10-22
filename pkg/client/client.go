@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/go-resty/resty/v2"
@@ -77,32 +78,52 @@ type AccountAttributes struct {
 	// Classification of account, can be either Personal or Business. Defaults to Personal if not provided. Only used for Confirmation of Payee.
 	AccountClassification *AccountAttributesAccountClassification `json:"account_classification,omitempty"`
 
+	// Flag to indicate if the account has opted out of account matching, only used for Confirmation of Payee. Defaults to false if not provided.
+	//
+	// This field has been replaced by name_matching_status.
+	AccountMatchingOptOut *bool `json:"account_matching_opt_out,omitempty"`
+
 	// A unique account number will be generated automatically if not provided. If provided, the account number is validated to ensure there's no duplicate. It does not undergo an MOD check.
-	AccountNumber *string `json:"account_number,omitempty"`
+	AccountNumber *string `json:"account_number,omitempty" validate:"omitempty,bank_account_number"`
+
+	// Alternative primary account names, only used for Confirmation of Payee. Up to 3 alternative account names, one in each line of the array.
+	//
+	// This field has been replaced by alternative_names.
+	AlternativeBankAccountNames *[]string `json:"alternative_bank_account_names,omitempty" validate:"omitempty,max=3,min=0,dive,max=140"`
 
 	// Alternative primary account names, up to 3 alternative account names with one name in each line of the array. Only used for Confirmation of Payee.
-	AlternativeNames *[]string `json:"alternative_names,omitempty"`
+	AlternativeNames *[]string `json:"alternative_names,omitempty" validate:"omitempty,max=3,min=0,dive,max=140"`
+
+	// Primary account name, only used for Confirmation of Payee.
+	//
+	// This field has been replaced by name.
+	BankAccountName *string `json:"bank_account_name,omitempty"`
 
 	// Local country bank identifier, must be a UK sort code.
-	BankId string `json:"bank_id"`
+	BankId string `json:"bank_id" validate:"required,min=4,max=11"`
 
 	// Identifies the type of bank ID being used, must be GBDSC.
-	BankIdCode string `json:"bank_id_code"`
+	BankIdCode string `json:"bank_id_code" validate:"required,oneof='GBDSC'"`
 
 	// ISO 4217 code  used to identify the base currency of the account. Must be GBP.
 	BaseCurrency *AccountAttributesBaseCurrency `json:"base_currency,omitempty"`
 
 	// SWIFT BIC in either 8 or 11 character format.
-	Bic string `json:"bic"`
+	Bic string `json:"bic" validate:"required,min=8,max=11,bic"`
 
 	// ISO 3166-1 code  used to identify the domicile of the account. Must be GB
-	Country string `json:"country"`
+	Country string `json:"country" validate:"required,iso3166_1_alpha2"`
 
 	// A free-format reference that can be used to link this account to an external system.
-	CustomerId *string `json:"customer_id,omitempty"`
+	CustomerId *string `json:"customer_id,omitempty" validate:"omitempty,max=36,min=0"`
+
+	// The account holder's first name, only used for Confirmation of Payee. Only used for personal accounts and when joint_account is false.
+	//
+	// This field has been replaced by name.
+	FirstName *string `json:"first_name,omitempty"`
 
 	// IBAN of the account. Generated if not provided.
-	Iban *string `json:"iban,omitempty"`
+	Iban *string `json:"iban,omitempty" validate:"omitempty,uk_iban"`
 
 	// Flag to indicate if the account is a joint account, set to true if this is a joint account. Defaults to false if not provided. Only used for Confirmation of Payee.
 	JointAccount *bool `json:"joint_account,omitempty"`
@@ -114,10 +135,15 @@ type AccountAttributes struct {
 	// * For concatenated personal names, joint account names and organisation names, use the first line.
 	// * If first and last names of a personal name are separated, use the first line for first names, the second line for last names.
 	// * Titles are ignored and should not be entered."
-	Name *[]string `json:"name,omitempty"`
+	Name *[]string `json:"name,omitempty" validate:"omitempty,max=4,min=0,dive,max=140"`
 
 	// Describes the status of the account for name matching via Confirmation of Payee. The value determines the code with which Form3 responds to matched Confirmation of Payee requests to this account.
 	NameMatchingStatus *AccountAttributesNameMatchingStatus `json:"name_matching_status,omitempty"`
+
+	// Maximum length 35 characters.
+	//
+	// This field has been replaced by user_defined_data.
+	ProcessingService *string `json:"processing_service,omitempty"`
 
 	// Mask to use when validating the reference field of inbound payments to the account. Payments without matching reference fields will be rejected.
 	//
@@ -128,20 +154,35 @@ type AccountAttributes struct {
 	// * All other characters are literals. \ can be used to escape control characters to literals.
 	// * Maximum length 35 characters.
 	// * - and space characters are ignored in the reference when matching.
-	ReferenceMask *string `json:"reference_mask,omitempty"`
+	ReferenceMask *string `json:"reference_mask,omitempty" validate:"omitempty,reference_mask"`
 
 	// Additional information to identify the account and account holder, 140 characters max. Can be any type of additional identification, e.g. a building society roll number. Only used for Confirmation of Payee.
-	SecondaryIdentification *string `json:"secondary_identification,omitempty"`
+	SecondaryIdentification *string `json:"secondary_identification,omitempty" validate:"omitempty,max=140"`
 
 	// Status of the account. pending and confirmed are set by Form3, closed can be set manually.
-	Status *AccountAttributesStatus `json:"status,omitempty"`
+	Status *AccountAttributesStatus `json:"status,omitempty" validate:"omitempty,oneof='closed'"`
 
 	// Additional account status information, required when updating status to closed, can't be used otherwise. The FPS code with which inbound payments to the account will be rejected depends on the value of this field.
-	StatusReason *AccountAttributesStatusReason `json:"status_reason,omitempty"`
+	StatusReason *AccountAttributesStatusReason `json:"status_reason,omitempty" validate:"omitempty,required_if=Status closed,excluded_if=Status closed"`
+
+	// Flag to indicate if the account has been switched away from this organisation, only used for Confirmation of Payee.
+	//
+	// This field has been replaced by name_matching_status.
+	Switched *bool `json:"switched,omitempty"`
+
+	// The account holder's title, e.g. Ms, Dr, Mr.
+	//
+	// This field has been replaced by name.
+	Title *string `json:"title,omitempty"`
 
 	// All-purpose field for storing data related to the account.
 	// If provided, this array will be copied into each Payment Admission resource relationship where this account is the beneficiary.
-	UserDefinedData *string `json:"user_defined_data,omitempty"`
+	UserDefinedData *[]UserDefinedData `json:"user_defined_data,omitempty"`
+
+	// All-purpose field for storing data related to the account.
+	//
+	// This field has been replaced by user_defined_data.
+	UserDefinedInformation *string `json:"user_defined_information,omitempty"`
 
 	// Determines if modcheck validations are carried out on inbound payments to the account. Only card is allowed if provided.
 	ValidationType *AccountAttributesValidationType `json:"validation_type,omitempty"`
@@ -171,12 +212,14 @@ type AccountAttributesValidationType string
 // AccountData defines model for AccountData.
 type AccountData struct {
 	Attributes *AccountAttributes `json:"attributes,omitempty"`
+	CreatedOn  *RFC3339NanoDate   `json:"created_on,omitempty"`
 
 	// Unique account id of the account
-	Id *openapi_types.UUID `json:"id,omitempty" tag1:"value1" tag2:"value2"`
+	Id         *openapi_types.UUID `json:"id,omitempty" validate:"required,uuid4"`
+	ModifiedOn *RFC3339NanoDate    `json:"modified_on,omitempty"`
 
 	// Unique organisation id of the account
-	OrganisationId *openapi_types.UUID `json:"organisation_id,omitempty"`
+	OrganisationId *openapi_types.UUID `json:"organisation_id,omitempty" validate:"required,uuid4"`
 	Relationships  *Relationships      `json:"relationships,omitempty"`
 
 	// type of the account
@@ -227,6 +270,12 @@ type PageFilter struct {
 	Size *string `json:"size,omitempty"`
 }
 
+// PageNotFound defines model for PageNotFound.
+type PageNotFound struct {
+	Code    *string `json:"code,omitempty"`
+	Message *string `json:"message,omitempty"`
+}
+
 // Relationships defines model for Relationships.
 type Relationships struct {
 	// The Account Event resources related to this account. 2 Account Event resource are created when the Account resource is created.
@@ -252,6 +301,15 @@ type ResponseDataArray struct {
 	Links        *Links         `json:"links,omitempty"`
 }
 
+// UserDefinedData defines model for UserDefinedData.
+type UserDefinedData struct {
+	// Some account related key
+	Key *string `json:"key,omitempty"`
+
+	// Some account related value
+	Value *string `json:"value,omitempty"`
+}
+
 // GetAccountAllParams defines parameters for GetAccountAll.
 type GetAccountAllParams struct {
 	// Options for filtering the results
@@ -272,6 +330,34 @@ type DeleteAccountByIdAndVersionParams struct {
 
 // CreateAccountJSONRequestBody defines body for CreateAccount for application/json ContentType.
 type CreateAccountJSONRequestBody = CreateAccountJSONBody
+
+type RFC3339NanoDate struct {
+	time.Time
+}
+
+const DateFormat = time.RFC3339Nano
+
+func (d RFC3339NanoDate) MarshalJSON() ([]byte, error) {
+	return json.Marshal(d.Time.Format(DateFormat))
+}
+
+func (d *RFC3339NanoDate) UnmarshalJSON(data []byte) error {
+	var dateStr string
+	err := json.Unmarshal(data, &dateStr)
+	if err != nil {
+		return err
+	}
+	parsed, err := time.Parse(DateFormat, dateStr)
+	if err != nil {
+		return err
+	}
+	d.Time = parsed
+	return nil
+}
+
+func (d RFC3339NanoDate) String() string {
+	return d.Time.Format(DateFormat)
+}
 
 type Client struct {
 	Server string
@@ -482,6 +568,7 @@ type CreateAccountResponse struct {
 	Body         []byte
 	HTTPResponse *resty.Response
 	JSON201      *ResponseData
+	JSON400      *ResponseData
 }
 
 // Status returns HTTPResponse.Status
@@ -503,6 +590,8 @@ func (r CreateAccountResponse) StatusCode() int {
 type DeleteAccountByIdAndVersionResponse struct {
 	Body         []byte
 	HTTPResponse *resty.Response
+	JSON400      *ResponseData
+	JSON404      *PageNotFound
 }
 
 // Status returns HTTPResponse.Status
@@ -525,6 +614,7 @@ type GetAccountByIdResponse struct {
 	Body         []byte
 	HTTPResponse *resty.Response
 	JSON200      *ResponseData
+	JSON404      *ResponseData
 }
 
 // Status returns HTTPResponse.Status
@@ -624,6 +714,13 @@ func ParseCreateAccountResponse(rsp *resty.Response) (*CreateAccountResponse, er
 		}
 		response.JSON201 = &dest
 
+	case strings.Contains(rsp.Header().Get("Content-Type"), "json") && rsp.StatusCode() == 400:
+		var dest ResponseData
+		if err := json.Unmarshal(rsp.Body(), &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
 	}
 
 	return response, nil
@@ -634,6 +731,24 @@ func ParseDeleteAccountByIdAndVersionResponse(rsp *resty.Response) (*DeleteAccou
 	response := &DeleteAccountByIdAndVersionResponse{
 		Body:         rsp.Body(),
 		HTTPResponse: rsp,
+	}
+
+	switch {
+
+	case strings.Contains(rsp.Header().Get("Content-Type"), "json") && rsp.StatusCode() == 400:
+		var dest ResponseData
+		if err := json.Unmarshal(rsp.Body(), &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header().Get("Content-Type"), "json") && rsp.StatusCode() == 404:
+		var dest PageNotFound
+		if err := json.Unmarshal(rsp.Body(), &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
 	}
 
 	return response, nil
@@ -654,6 +769,13 @@ func ParseGetAccountByIdResponse(rsp *resty.Response) (*GetAccountByIdResponse, 
 			return nil, err
 		}
 		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header().Get("Content-Type"), "json") && rsp.StatusCode() == 404:
+		var dest ResponseData
+		if err := json.Unmarshal(rsp.Body(), &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
 
 	}
 

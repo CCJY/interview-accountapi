@@ -52,6 +52,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResponseData"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseData"
 
   /organisation/accounts/{account_id}:
     get:
@@ -67,6 +73,12 @@ paths:
       responses:
         "200":
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseData"
+        "404":
+          description: Not Found
           content:
             application/json:
               schema:
@@ -123,12 +135,25 @@ paths:
       responses:
         "204":
           description: No Content
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseData"
         "404":
           description: Not Found
         "409":
           description: Conflict
 components:
   schemas:
+    PageNotFound:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
     Links:
       type: object
       properties:
@@ -188,6 +213,7 @@ components:
           $ref: "#/components/schemas/Links"
         error_message:
           type: string
+
     RequestData:
       type: object
       properties:
@@ -201,12 +227,13 @@ components:
           format: uuid
           description: Unique account id of the account
           x-oapi-codegen-extra-tags:
-            tag1: value1
-            tag2: value2
+            validate: required,uuid4
         organisation_id:
           type: string
           format: uuid
           description: Unique organisation id of the account
+          x-oapi-codegen-extra-tags:
+            validate: required,uuid4
         type:
           type: string
           description: type of the account
@@ -214,6 +241,12 @@ components:
           type: integer
           format: int64
           description: version of the account
+        created_on:
+          type: string
+          x-go-type: RFC3339NanoDate
+        modified_on:
+          type: string
+          x-go-type: RFC3339NanoDate
         attributes:
           type: object
           $ref: "#/components/schemas/AccountAttributes"
@@ -231,16 +264,21 @@ components:
         bank_id:
           type: string
           description: Local country bank identifier, must be a UK sort code.
-          pattern: ^.\d{6,11}$
+          x-oapi-codegen-extra-tags:
+            validate: required,min=4,max=11
         bank_id_code:
           type: string
           description: Identifies the type of bank ID being used, must be GBDSC.
+          x-oapi-codegen-extra-tags:
+            validate: required,oneof='GBDSC'
           example:
             value: GBDSC
             description: The ID in bank_id is a UK sort code.
         bic:
           type: string
           description: SWIFT BIC in either 8 or 11 character format.
+          x-oapi-codegen-extra-tags:
+            validate: required,min=8,max=11,bic
           minimum: 8
           maximum: 11
         country:
@@ -249,6 +287,8 @@ components:
           example:
             value: GB
             description: The account is a UK account.
+          x-oapi-codegen-extra-tags:
+            validate: required,iso3166_1_alpha2
         acceptance_qualifier:
           type: string
           enum:
@@ -267,6 +307,8 @@ components:
         account_number:
           type: string
           description: A unique account number will be generated automatically if not provided. If provided, the account number is validated to ensure there's no duplicate. It does not undergo an MOD check.
+          x-oapi-codegen-extra-tags:
+            validate: omitempty,bank_account_number
         alternative_names:
           description: Alternative primary account names, up to 3 alternative account names with one name in each line of the array. Only used for Confirmation of Payee.
           type: array
@@ -274,6 +316,8 @@ components:
           items:
             type: string
             maximum: 140
+          x-oapi-codegen-extra-tags:
+            validate: omitempty,max=3,min=0,dive,max=140
         base_currency:
           type: string
           description: ISO 4217 code  used to identify the base currency of the account. Must be GBP.
@@ -282,9 +326,13 @@ components:
         customer_id:
           type: string
           description: A free-format reference that can be used to link this account to an external system.
+          x-oapi-codegen-extra-tags:
+            validate: omitempty,max=36,min=0
         iban:
           type: string
           description: IBAN of the account. Generated if not provided.
+          x-oapi-codegen-extra-tags:
+            validate: omitempty,uk_iban
         joint_account:
           type: boolean
           description: Flag to indicate if the account is a joint account, set to true if this is a joint account. Defaults to false if not provided. Only used for Confirmation of Payee.
@@ -303,6 +351,8 @@ components:
           items:
             type: string
             maximum: 140
+          x-oapi-codegen-extra-tags:
+            validate: omitempty,max=4,min=0,dive,max=140
         name_matching_status:
           type: string
           description: Describes the status of the account for name matching via Confirmation of Payee. The value determines the code with which Form3 responds to matched Confirmation of Payee requests to this account.
@@ -323,14 +373,21 @@ components:
             * All other characters are literals. \ can be used to escape control characters to literals.
             * Maximum length 35 characters.
             * - and space characters are ignored in the reference when matching.
+          x-oapi-codegen-extra-tags:
+            validate: omitempty,reference_mask
         secondary_identification:
           type: string
           description: Additional information to identify the account and account holder, 140 characters max. Can be any type of additional identification, e.g. a building society roll number. Only used for Confirmation of Payee.
+          x-oapi-codegen-extra-tags:
+            validate: omitempty,max=140
         user_defined_data:
-          type: string
+          type: array
           description: |
             All-purpose field for storing data related to the account.
             If provided, this array will be copied into each Payment Admission resource relationship where this account is the beneficiary.
+          items:
+            type: object
+            $ref: "#/components/schemas/UserDefinedData"
         validation_type:
           type: string
           description: Determines if modcheck validations are carried out on inbound payments to the account. Only card is allowed if provided.
@@ -343,6 +400,8 @@ components:
             - closed
             - confirmed
             - pending
+          x-oapi-codegen-extra-tags:
+            validate: omitempty,oneof='closed'
         status_reason:
           type: string
           description: Additional account status information, required when updating status to closed, can't be used otherwise. The FPS code with which inbound payments to the account will be rejected depends on the value of this field.
@@ -355,7 +414,77 @@ components:
             - stopped
             - terms_and_conditions
             - transferred
+          x-oapi-codegen-extra-tags:
+            validate: omitempty,required_if=Status closed,excluded_if=Status closed
+        account_matching_opt_out:
+          deprecated: true
+          description: |
+            Flag to indicate if the account has opted out of account matching, only used for Confirmation of Payee. Defaults to false if not provided.
 
+            This field has been replaced by name_matching_status.
+          type: boolean
+        alternative_bank_account_names:
+          deprecated: true
+          description: |
+            Alternative primary account names, only used for Confirmation of Payee. Up to 3 alternative account names, one in each line of the array.
+
+            This field has been replaced by alternative_names.
+          type: array
+          items:
+            type: string
+          x-oapi-codegen-extra-tags:
+            validate: omitempty,max=3,min=0,dive,max=140
+        bank_account_name:
+          deprecated: true
+          description: |
+            Primary account name, only used for Confirmation of Payee.
+
+            This field has been replaced by name.
+          type: string
+        first_name:
+          deprecated: true
+          description: |
+            The account holder's first name, only used for Confirmation of Payee. Only used for personal accounts and when joint_account is false.
+
+            This field has been replaced by name.
+          type: string
+        processing_service:
+          deprecated: true
+          description: |
+            Maximum length 35 characters.
+
+            This field has been replaced by user_defined_data.
+          type: string
+        switched:
+          deprecated: true
+          description: |
+            Flag to indicate if the account has been switched away from this organisation, only used for Confirmation of Payee.
+
+            This field has been replaced by name_matching_status.
+          type: boolean
+        title:
+          deprecated: true
+          description: |
+            The account holder's title, e.g. Ms, Dr, Mr.
+
+            This field has been replaced by name.
+          type: string
+        user_defined_information:
+          deprecated: true
+          description: |
+            All-purpose field for storing data related to the account.
+
+            This field has been replaced by user_defined_data.
+          type: string
+    UserDefinedData:
+      type: object
+      properties:
+        key:
+          type: string
+          description: Some account related key
+        value:
+          type: string
+          description: Some account related value
     Relationships:
       type: object
       properties:
