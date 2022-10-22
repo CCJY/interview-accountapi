@@ -27,17 +27,64 @@ func (d RFC3339NanoDate) String() string {
 	return d.Time.Format(DateFormat)
 }
 
-type Client struct {
-	Server string
-	Client resty.Client
+
+func IsSWiftCode(fl validator.FieldLevel) bool {
+	regex := "^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$"
+	SwiftCodeRegex := regexp.MustCompile(regex)
+
+	return SwiftCodeRegex.MatchString(fl.Field().String())
 }
 
-func New(url string) *Client {
-	client := resty.New().SetBaseURL(url)
+func IsBankAccountNumber(fl validator.FieldLevel) bool {
+	regex := "^(\\d){7,8}$"
+	BankAccountNumberRegex := regexp.MustCompile(regex)
 
+	return BankAccountNumberRegex.MatchString(fl.Field().String())
+}
+func IsUKIBAN(fl validator.FieldLevel) bool {
+	regex := "^GB\\d{2}[A-Z]{4}\\d{14}$"
+	UKIBANRegex := regexp.MustCompile(regex)
+
+	return UKIBANRegex.MatchString(fl.Field().String())
+}
+
+func IsReferenceMask(fl validator.FieldLevel) bool {
+	regex := "^[#$?\\\\]{1,35}?$"
+	ReferenceMaskRegex := regexp.MustCompile(regex)
+
+	return ReferenceMaskRegex.MatchString(fl.Field().String())
+}
+
+func NewValidator() *validator.Validate {
+	var validator = validator.New()
+	validator.RegisterCustomTypeFunc(func(field reflect.Value) interface{} {
+		if valuer, ok := field.Interface().(uuid.UUID); ok {
+			return valuer.String()
+		}
+		return nil
+	}, uuid.UUID{})
+
+	validator.RegisterValidation("swift_code", IsSWiftCode)
+	validator.RegisterValidation("bank_account_number", IsBankAccountNumber)
+	validator.RegisterValidation("uk_iban", IsUKIBAN)
+	validator.RegisterValidation("reference_mask", IsReferenceMask)
+
+	return validator 
+}
+
+type Client struct {
+	Server string
+	Client *resty.Client
+    Validator *validator.Validate
+}
+
+func New(url string) *Client  {
+	client := resty.New().SetBaseURL(url)
+    validator := NewValidator()
 	return &Client{
 		Server: url,
-		Client: *client,
+		Client: client,
+        Validator: validator,
 	}
 }
 
@@ -129,6 +176,10 @@ func (c *Client) New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string
     req.SetQueryParamsFromValues(queryValues)
 {{end}}{{/* if .QueryParams */}}
     {{if .HasBody}}
+	if err := c.Validator.Struct(body); err != nil {
+		return nil, err
+	}
+
     req.SetBody(body)
     {{end}}
 
