@@ -1,7 +1,7 @@
 package account
 
 import (
-	"github.com/ccjy/interview-accountapi/pkg/types"
+	"github.com/ccjy/interview-accountapi/pkg/client/types"
 )
 
 const (
