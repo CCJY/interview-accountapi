@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	"github.com/ccjy/interview-accountapi/pkg/client"
-	"github.com/ccjy/interview-accountapi/pkg/types"
+	"github.com/ccjy/interview-accountapi/pkg/client/types"
 
-	account_types "github.com/ccjy/interview-accountapi/pkg/types/account"
+	account_types "github.com/ccjy/interview-accountapi/pkg/client/types/account"
 )
 
 type HttpClient struct {
@@ -99,6 +99,7 @@ func (c *HttpClient) GetAccountByIdWithResponse(account_id string) (*account_typ
 		return nil, err
 	}
 
+	defer rsp.Body.Close()
 	rspData.HttpResponse = types.HttpResponse{
 		HttpResponse: rsp,
 	}

@@ -152,39 +152,21 @@ func TestCreate10AndGetAllAndDeleteAllAccount(t *testing.T) {
 		}
 	}
 
-	GetAllAndDeleteAllAccountTest(t, client)
-}
-
-func GetAllAndDeleteAllAccountTest(t *testing.T, client *Client) {
-
 	params := GetAccountAllParams{}
-	accounts := make(map[string]int64)
 
 	if got, err := client.GetAccountAllWithResponse(serverUrl, &params); err != nil {
 		t.Errorf("%v", err)
 	} else {
-		assert.Equal(t, http.StatusOK, got.StatusCode(), "Should be: %v, got: %v", http.StatusOK, got.StatusCode())
 		if got.JSON200.Data != nil {
 			for _, data := range *got.JSON200.Data {
-				accounts[data.Id.String()] = *data.Version
+				params := DeleteAccountByIdAndVersionParams{Version: *data.Version}
+				if got, err := client.DeleteAccountByIdAndVersionWithResponse(serverUrl, data.Id.String(), &params); err != nil {
+					t.Errorf("%v", err)
+				} else {
+					assert.Equal(t, http.StatusNoContent, got.StatusCode(), "Should be: %v, got: %v", http.StatusNoContent, got.StatusCode())
+				}
 			}
 		}
-	}
-
-	for key, data := range accounts {
-		params := DeleteAccountByIdAndVersionParams{Version: data}
-		if got, err := client.DeleteAccountByIdAndVersionWithResponse(serverUrl, key, &params); err != nil {
-			t.Errorf("%v", err)
-		} else {
-			assert.Equal(t, http.StatusNoContent, got.StatusCode(), "Should be: %v, got: %v", http.StatusNoContent, got.StatusCode())
-		}
-	}
-
-	if got, err := client.GetAccountAllWithResponse(serverUrl, &params); err != nil {
-		t.Errorf("%v", err)
-	} else {
-		assert.Equal(t, http.StatusOK, got.StatusCode(), "Should be: %v, got: %v", http.StatusOK, got.StatusCode())
-		assert.Nil(t, got.JSON200.Data)
 	}
 
 }

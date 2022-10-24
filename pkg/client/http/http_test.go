@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"testing"
 
-	account_types "github.com/ccjy/interview-accountapi/pkg/types/account"
+	account_types "github.com/ccjy/interview-accountapi/pkg/client/types/account"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
@@ -171,8 +171,6 @@ func TestCreate10AndGetAllAndDeleteAllAccount(t *testing.T) {
 		}
 	}
 
-	accounts := make(map[string]int64)
-
 	page := account_types.FilterPage{
 		Number: 1,
 		Size:   10,
@@ -186,27 +184,16 @@ func TestCreate10AndGetAllAndDeleteAllAccount(t *testing.T) {
 	if got, err := client.GetAccountAllWithResponse(&page, accountFilter); err != nil {
 		t.Errorf("%v", err)
 	} else {
-		assert.Equal(t, http.StatusOK, got.StatusCode(), "Should be: %v, got: %v", http.StatusOK, got.StatusCode())
 		if got.Data != nil {
 			for _, data := range *got.Data {
-				accounts[data.Id.String()] = *data.Version
+				params := account_types.DeleteAccountByIdAndVersionParams{Version: *data.Version}
+				if got, err := client.DeleteAccountByIdAndVersionWithResponse(data.Id.String(), &params); err != nil {
+					t.Errorf("%v", err)
+				} else {
+					assert.Equal(t, http.StatusNoContent, got.StatusCode(), "Should be: %v, got: %v", http.StatusNoContent, got.StatusCode())
+				}
 			}
 		}
 	}
 
-	for key, data := range accounts {
-		params := account_types.DeleteAccountByIdAndVersionParams{Version: data}
-		if got, err := client.DeleteAccountByIdAndVersionWithResponse(key, &params); err != nil {
-			t.Errorf("%v", err)
-		} else {
-			assert.Equal(t, http.StatusNoContent, got.StatusCode(), "Should be: %v, got: %v", http.StatusNoContent, got.StatusCode())
-		}
-	}
-
-	if got, err := client.GetAccountAllWithResponse(&account_types.FilterPage{}); err != nil {
-		t.Errorf("%v", err)
-	} else {
-		assert.Equal(t, http.StatusOK, got.StatusCode(), "Should be: %v, got: %v", http.StatusOK, got.StatusCode())
-		assert.Nil(t, got.Data)
-	}
 }

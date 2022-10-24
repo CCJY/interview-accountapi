@@ -1,9 +1,5 @@
 package account
 
-import (
-	"github.com/ccjy/interview-accountapi/pkg/types"
-)
-
 const (
 	ContentType string = "application/json"
 )
@@ -13,13 +9,11 @@ type RequestData struct {
 }
 
 type ResponseData struct {
-	types.HttpResponse
 	Data         *AccountData `json:"data,omitempty"`
 	ErrorMessage string       `json:"error_message,omitempty"`
 }
 
 type ResponseDataArray struct {
-	types.HttpResponse
 	Data         *[]AccountData `json:"data,omitempty"`
 	ErrorMessage string         `json:"error_message,omitempty"`
 }
@@ -36,7 +30,6 @@ type DeleteAccountByIdAndVersionParams struct {
 }
 
 type DeleteAccountByWithResponse struct {
-	types.HttpResponse
 	ErrorMessage string `json:"error_message,omitempty"`
 }
 
