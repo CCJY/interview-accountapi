@@ -392,3 +392,96 @@ func TestNewRequestContext_CreateAccountWithResponse_Multipe3(t *testing.T) {
 	AssertCreateAccountWithResponse(t, rspDatas.rspCreate2.StatusCode(), reqData2, &rspDatas.rspCreate2.Data)
 	AssertCreateAccountWithResponse(t, rspDatas.rspCreate3.StatusCode(), reqData3, &rspDatas.rspCreate3.Data)
 }
+
+// https://httpbin.org/get
+type TestModel struct {
+	Url    string `json:"url"`
+	Origin string `json:"origin"`
+}
+
+func TestNewRequestContext_DifferentUrl(t *testing.T) {
+	reqData1 := DefaultRequestData()
+	reqData2 := DefaultRequestData()
+
+	var waitGroup sync.WaitGroup
+	c := make(chan error)
+	waitGroup.Add(3)
+
+	rspDatas := struct {
+		rspCreate1 *ResponseContext[account_types.CreateAccountWithResponse]
+		rspCreate2 *ResponseContext[account_types.CreateAccountWithResponse]
+		rspCreate3 *ResponseContext[TestModel]
+	}{}
+
+	go func() {
+		fmt.Printf("1 Waiting...")
+		waitGroup.Wait()
+		fmt.Printf("Closing...")
+		close(c)
+	}()
+
+
+
+	go func() {
+		defer waitGroup.Done()
+		rsp1, err := NewRequestContext(
+			&RequestContext[account_types.CreateAccountWithResponse]{
+				Method:        http.MethodPost,
+				BaseUrl:       baseUrl,
+				OperationPath: account_types.OperationPathCreateAccount,
+				Header: map[string][]string{
+					"Content-Type": {"application/json"},
+				},
+				Body: reqData1,
+			}).Do()
+		if err != nil {
+			c <- err
+		}
+		rspDatas.rspCreate1 = rsp1
+	}()
+
+	go func() {
+		defer waitGroup.Done()
+		rsp2, err := NewRequestContext(
+			&RequestContext[account_types.CreateAccountWithResponse]{
+				Method:        http.MethodPost,
+				BaseUrl:       baseUrl,
+				OperationPath: account_types.OperationPathCreateAccount,
+				Header: map[string][]string{
+					"Content-Type": {"application/json"},
+				},
+				Body: reqData2,
+			}).Do()
+		if err != nil {
+			c <- err
+		}
+		rspDatas.rspCreate2 = rsp2
+	}()
+
+	go func() {
+		defer waitGroup.Done()
+		rsp3, err := NewRequestContext(
+			&RequestContext[TestModel]{
+				Method:        http.MethodGet,
+				BaseUrl:       "https://httpbin.org",
+				OperationPath: "get",
+			}).Do()
+		if err != nil {
+			c <- err
+		}
+		rspDatas.rspCreate3 = rsp3
+	}()
+
+	fmt.Printf("2 Waiting...")
+	for err := range c {
+		if err != nil {
+			t.Error(err)
+		}
+	}
+	fmt.Printf("3 Waiting...")
+
+	AssertCreateAccountWithResponse(t, rspDatas.rspCreate1.StatusCode(), reqData1, &rspDatas.rspCreate1.Data)
+	AssertCreateAccountWithResponse(t, rspDatas.rspCreate2.StatusCode(), reqData2, &rspDatas.rspCreate2.Data)
+
+	assert.NotNil(t, rspDatas.rspCreate3.Data.Url)
+}
