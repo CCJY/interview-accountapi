@@ -238,7 +238,7 @@ func TestGetAccountByIdWithResponse_NoExists404(t *testing.T) {
 		t.Error(err)
 	}
 
-	AssertGetAccountByIdWithResponse(t, rsp.StatusCode(), reqData, &rsp.Data)
+	assert.Equal(t, http.StatusNotFound, rsp.StatusCode())
 
 }
 
