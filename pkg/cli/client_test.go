@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"sync"
 	"testing"
 	"time"
@@ -16,7 +17,15 @@ import (
 )
 
 var (
-	baseUrl = "http://localhost:8080"
+	baseUrl = func() string {
+		env := os.Getenv("APP-ENV")
+		switch env {
+		case "docker":
+			return "http://accountapi:8080"
+		default:
+			return "http://127.0.0.1:8080"
+		}
+	}()
 )
 
 func DefaultAccountData() *account_types.AccountData {
@@ -96,7 +105,7 @@ func AssertDeleteAccountByIdAndVersionWithResponse(t *testing.T, statusCode int,
 func TestPathAndQueryWithFilter(t *testing.T) {
 	Init()
 
-	expected := "http://localhost:8080/v1/organisation/accounts?filter[account_id]=account_id"
+	expected := fmt.Sprintf("%s/v1/organisation/accounts?filter[account_id]=account_id", baseUrl)
 
 	context := &RequestContext[account_types.GetAccountAllWithResponses]{
 		BaseUrl:       baseUrl,
@@ -419,8 +428,6 @@ func TestNewRequestContext_DifferentUrl(t *testing.T) {
 		fmt.Printf("Closing...")
 		close(c)
 	}()
-
-
 
 	go func() {
 		defer waitGroup.Done()
