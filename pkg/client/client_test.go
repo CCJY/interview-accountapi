@@ -1,4 +1,4 @@
-package cli
+package client
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	account_types "github.com/ccjy/interview-accountapi/pkg/cli/types/account"
+	account_types "github.com/ccjy/interview-accountapi/pkg/client/types/account"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
