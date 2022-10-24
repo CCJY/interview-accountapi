@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"os"
 	"testing"
 	"time"
 
@@ -13,7 +14,15 @@ import (
 )
 
 var (
-	serverUrl = "http://127.0.0.1:8080/v1/"
+	serverUrl = func() string {
+		env := os.Getenv("APP-ENV")
+		switch env {
+		case "docker":
+			return "http://accountapi:8080/v1/"
+		default:
+			return "http://127.0.0.1:8080/v1/"
+		}
+	}()
 )
 
 const charset = "abcdefghijklmnopqrstuvwxyz" + "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
