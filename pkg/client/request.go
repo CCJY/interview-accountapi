@@ -2,11 +2,8 @@ package client
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"net/http"
-	"net/url"
-	"strings"
 	"time"
 )
 
@@ -15,46 +12,25 @@ var (
 )
 
 type RequestContext[T any] struct {
+	HttpClient      *http.Client
 	HttpRequest     *http.Request
-	BaseUrl         string
-	OperationPath   string
-	QueryParams     url.Values
-	PathParams      map[string]string
-	Body            interface{}
 	Context         context.Context
 	CustomEncoding  Encoding
 	DefaultEncoding HttpEncoding
 	Header          http.Header
 	Method          string
+	UrlBuilder      UrlBuilder
+	Body            interface{}
+
+	HookWhenBeforeDo func(*RequestContext[T]) error
+	HookWhenAfterDo  func(*ResponseContext[T]) error
 
 	Retry         bool
 	RetryInterval time.Duration
 	RetryMax      int
-
-	HttpClientDo func(*http.Request) (*http.Response, error)
 }
 
-func (r *RequestContext[T]) BuildUrl() (*url.URL, error) {
-	baseUrl, err := url.Parse(r.BaseUrl)
-	if err != nil {
-		return nil, err
-	}
-
-	for k, v := range r.PathParams {
-		r.OperationPath = strings.ReplaceAll(r.OperationPath, fmt.Sprintf("{%s}", k), v)
-	}
-
-	url, err := baseUrl.Parse(r.OperationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	url.RawQuery = r.QueryParams.Encode()
-
-	return url, err
-}
-
-func (r *RequestContext[T]) BuildBody() (io.Reader, error) {
+func (r *RequestContext[T]) buildBody() (io.Reader, error) {
 	if r.Body == nil {
 		return nil, nil
 	}
@@ -70,18 +46,18 @@ func (r *RequestContext[T]) BuildBody() (io.Reader, error) {
 	return r.DefaultEncoding.Marshal(contentType, r.Body)
 }
 
-func (r *RequestContext[T]) NewRequest() (*RequestContext[T], error) {
-	url, err := r.BuildUrl()
+func (r *RequestContext[T]) newRequest() (*RequestContext[T], error) {
+	url, err := r.UrlBuilder.Build()
 	if err != nil {
 		return nil, err
 	}
 
-	reader, err := r.BuildBody()
+	reader, err := r.buildBody()
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := http.NewRequest(r.Method, url.String(), reader)
+	req, err := http.NewRequest(r.Method, url, reader)
 	if err != nil {
 		return nil, err
 	}
@@ -97,12 +73,19 @@ func (r *RequestContext[T]) NewRequest() (*RequestContext[T], error) {
 }
 
 func (r *RequestContext[T]) Do() (*ResponseContext[T], error) {
-	req, err := r.NewRequest()
+	req, err := r.newRequest()
 	if err != nil {
 		return nil, err
 	}
 
-	rsp, err := r.HttpClientDo(req.HttpRequest)
+	if r.HookWhenBeforeDo != nil {
+		err = r.HookWhenBeforeDo(r)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	rsp, err := r.HttpClient.Do(req.HttpRequest)
 	if err != nil {
 		return nil, err
 	}
@@ -126,5 +109,42 @@ func (r *RequestContext[T]) Do() (*ResponseContext[T], error) {
 	rspContext.HttpResponse = rsp
 	rspContext.Data = rspData
 
+	if r.HookWhenAfterDo != nil {
+		err = r.HookWhenAfterDo(&rspContext)
+		if err != nil {
+			return &rspContext, err
+		}
+	}
+
 	return &rspContext, nil
+}
+
+func (r *RequestContext[T]) WhenAfterDo(hook func(*ResponseContext[T]) error) *RequestContext[T] {
+
+	r.HookWhenAfterDo = hook
+
+	return r
+}
+
+func (r *RequestContext[T]) WhenBeforeDo(hook func(*RequestContext[T]) error) *RequestContext[T] {
+
+	r.HookWhenBeforeDo = hook
+
+	return r
+}
+
+type RequestInterface[T any] interface {
+	WhenBeforeDo(func(*RequestContext[T]) error) *RequestContext[T]
+	Do() (*ResponseContext[T], error)
+	WhenAfterDo(func(*ResponseContext[T]) error) *RequestContext[T]
+}
+
+func NewRequest[T any](httpClient *Client, r *RequestContext[T]) RequestInterface[T] {
+	if httpClient == nil || r == nil {
+		return nil
+	}
+
+	r.HttpClient = httpClient.HttpClient
+	r.CustomEncoding = httpClient.Encoding
+	return r
 }
