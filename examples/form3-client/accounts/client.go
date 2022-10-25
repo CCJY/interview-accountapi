@@ -1,7 +1,6 @@
 package accounts
 
 import (
-	"fmt"
 	"net/http"
 	"net/url"
 
@@ -39,14 +38,14 @@ func (a *AccountClient) CreateAccount(account *types.CreateAccountRequest) (*typ
 	).WhenBeforeDo(func(rc *types.CreateAccountRequestContext) error {
 		return nil
 	}).WhenAfterDo(func(rc *types.CreateAccountResponseContext) error {
-		switch rc.StatusCode() {
-		case http.StatusCreated:
-			fmt.Printf("Created")
-		case http.StatusConflict:
-		case http.StatusBadRequest:
-		default:
-			fmt.Printf("unexpected error: %d", rc.StatusCode())
-		}
+		// switch rc.StatusCode() {
+		// case http.StatusCreated:
+		// 	fmt.Printf("Created")
+		// case http.StatusConflict:
+		// case http.StatusBadRequest:
+		// default:
+		// 	fmt.Printf("unexpected error: %d", rc.StatusCode())
+		// }
 		return nil
 	}).Do()
 }
@@ -64,19 +63,7 @@ func (a *AccountClient) GetAccount(accountId string) (*types.GetAccountResponseC
 				},
 			},
 		},
-	).WhenBeforeDo(func(rc *types.GetAccountRequestContext) error {
-		return nil
-	}).WhenAfterDo(func(rc *types.GetAccountResponseContext) error {
-		switch rc.StatusCode() {
-		case http.StatusOK:
-			fmt.Printf("get account")
-		case http.StatusConflict:
-		case http.StatusBadRequest:
-		default:
-			fmt.Printf("unexpected error: %d", rc.StatusCode())
-		}
-		return nil
-	}).Do()
+	).Do()
 }
 
 func (a *AccountClient) DeleteAccount(accountId string, version string) (*types.DeleteAccountResponseContext, error) {
@@ -95,17 +82,5 @@ func (a *AccountClient) DeleteAccount(accountId string, version string) (*types.
 				},
 			},
 		},
-	).WhenBeforeDo(func(rc *types.DeleteAccountRequestContext) error {
-		return nil
-	}).WhenAfterDo(func(rc *types.DeleteAccountResponseContext) error {
-		switch rc.StatusCode() {
-		case http.StatusNoContent:
-			fmt.Printf("deleted account")
-		case http.StatusConflict:
-		case http.StatusBadRequest:
-		default:
-			fmt.Printf("unexpected error: %d", rc.StatusCode())
-		}
-		return nil
-	}).Do()
+	).Do()
 }
