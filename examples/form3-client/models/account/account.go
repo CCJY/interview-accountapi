@@ -1,31 +1,25 @@
 package account
 
-// Defines values for AccountAttributesAccountClassification.
-const (
-	AccountClassificationBusiness AccountClassification = "Business"
-	AccountClassificationPersonal AccountClassification = "Personal"
+import (
+	"github.com/google/uuid"
 )
 
-// Defines values for AccountAttributesBaseCurrency.
-const (
-	BaseCurrencyGBP BaseCurrency = "GBP"
-)
+// AccountData defines model for AccountData.
+type AccountData struct {
+	Attributes *AccountAttributes `json:"attributes,omitempty"`
 
-// Defines values for AccountAttributesStatus.
-const (
-	StatusClosed    Status = "closed"
-	StatusConfirmed Status = "confirmed"
-	StatusPending   Status = "pending"
-)
+	// Unique account id of the account
+	Id *uuid.UUID `json:"id,omitempty" validate:"required,uuid4"`
 
-// ISO 4217 code  used to identify the base currency of the account. Must be GBP.
-type BaseCurrency string
+	// Unique organisation id of the account
+	OrganisationId *uuid.UUID `json:"organisation_id,omitempty" validate:"required,uuid4"`
 
-// Classification of account, can be either Personal or Business. Defaults to Personal if not provided. Only used for Confirmation of Payee.
-type AccountClassification string
+	// type of the account
+	Type *string `json:"type,omitempty"`
 
-// Status of the account. pending and confirmed are set by Form3, closed can be set manually.
-type Status string
+	// version of the account
+	Version *int64 `json:"version,omitempty"`
+}
 
 // AccountAttributes defines model for AccountAttributes.
 type AccountAttributes struct {
@@ -84,3 +78,30 @@ type AccountAttributes struct {
 	// This field has been replaced by name_matching_status.
 	Switched *bool `json:"switched,omitempty"`
 }
+
+// Defines values for AccountAttributesAccountClassification.
+const (
+	AccountClassificationBusiness AccountClassification = "Business"
+	AccountClassificationPersonal AccountClassification = "Personal"
+)
+
+// Defines values for AccountAttributesBaseCurrency.
+const (
+	BaseCurrencyGBP BaseCurrency = "GBP"
+)
+
+// Defines values for AccountAttributesStatus.
+const (
+	StatusClosed    Status = "closed"
+	StatusConfirmed Status = "confirmed"
+	StatusPending   Status = "pending"
+)
+
+// ISO 4217 code  used to identify the base currency of the account. Must be GBP.
+type BaseCurrency string
+
+// Classification of account, can be either Personal or Business. Defaults to Personal if not provided. Only used for Confirmation of Payee.
+type AccountClassification string
+
+// Status of the account. pending and confirmed are set by Form3, closed can be set manually.
+type Status string

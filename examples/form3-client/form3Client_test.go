@@ -1,17 +1,18 @@
-package form3fakeaccountapi
+package form3client
 
 import (
+	"reflect"
 	"testing"
 
-	"github.com/ccjy/interview-accountapi/examples/form3-fake-account-api/accounts"
-	account_types "github.com/ccjy/interview-accountapi/examples/form3-fake-account-api/types/account"
+	"github.com/ccjy/interview-accountapi/examples/form3-client/accounts"
+	"github.com/ccjy/interview-accountapi/examples/form3-client/accounts/types"
+	"github.com/ccjy/interview-accountapi/examples/form3-client/models/account"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
-	"github.com/stretchr/testify/assert"
 )
 
-func DefaultAccountData() *account_types.AccountData {
-	attributes := account_types.AccountAttributes{
+func DefaultAccountData() *account.AccountData {
+	attributes := account.AccountAttributes{
 		BankId:     "400300",
 		BankIdCode: "GBDSC",
 		Bic:        "NWBKGB22",
@@ -21,7 +22,7 @@ func DefaultAccountData() *account_types.AccountData {
 		},
 	}
 
-	return &account_types.AccountData{
+	return &account.AccountData{
 		Attributes:     &attributes,
 		Id:             lo.ToPtr(uuid.New()),
 		OrganisationId: lo.ToPtr(uuid.New()),
@@ -32,28 +33,28 @@ func DefaultAccountData() *account_types.AccountData {
 
 func TestForm3Client_CreateAccount(t *testing.T) {
 	type args struct {
-		accountData *accounts.CreateAccountRequest
+		accountData *types.CreateAccountRequest
 	}
 	type test struct {
 		name    string
 		args    args
-		want    *accounts.CreateAccountRequest
+		want    *types.CreateAccountRequest
 		wantErr bool
 	}
 
 	createAcountFn := func(name string) test {
 		account_data := DefaultAccountData()
-		data := &accounts.CreateAccountRequest{
+		data := &types.CreateAccountRequest{
 			Data: *account_data,
 		}
 
 		return test{
+			name: name,
 			args: args{
 				data,
 			},
 			want: data,
 		}
-
 	}
 	tests := []test{
 		// TODO: Add test cases.
@@ -68,10 +69,45 @@ func TestForm3Client_CreateAccount(t *testing.T) {
 				return
 			}
 
-			assert.Equal(t, got.Data.Data.Id, tt.want.Data.Id)
+			if !reflect.DeepEqual(tt.want.Data, got.ContextData.Data) {
+				t.Errorf("Client.CreateAccount() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			// assert.Equal(t, tt.args.accountData.Data.Id, got.ContextData.Data.Id)
+			// assert.Equal(t, tt.args.accountData.Data.OrganisationId, got.ContextData.Data.OrganisationId)
+			// assert.Equal(t, tt.args.accountData.Data.Version, got.ContextData.Data.Version)
+			// assert.Equal(t, tt.args.accountData.Data.Type, got.ContextData.Data.Type)
+			// assert.Equal(t, tt.args.accountData.Data.Attributes.BankId, got.ContextData.Data.Attributes.BankId)
+			// assert.Equal(t, tt.args.accountData.Data.Attributes.BankIdCode, got.ContextData.Data.Attributes.BankIdCode)
+			// assert.Equal(t, tt.args.accountData.Data.Attributes.Bic, got.ContextData.Data.Attributes.Bic)
+			// assert.Equal(t, tt.args.accountData.Data.Attributes.Country, got.ContextData.Data.Attributes.Country)
+			// assert.Equal(t, tt.args.accountData.Data.Attributes.Name, got.ContextData.Data.Attributes.Name)
 		})
 	}
 
+}
+
+func TestForm3Client_GetAccountApi(t *testing.T) {
+	type fields struct {
+		AccountApi accounts.AccountClientInterface
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   accounts.AccountClientInterface
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := &Form3Client{
+				AccountApi: tt.fields.AccountApi,
+			}
+			if got := f.GetAccountApi(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Form3Client.GetAccountApi() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }
 
 // func DefaultRequestData() *account_types.CreateAccountBody {

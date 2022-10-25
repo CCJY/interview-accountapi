@@ -1,18 +1,10 @@
-package account
+package types
 
-const (
-	ContentType string = "application/json"
+import (
+	"github.com/ccjy/interview-accountapi/examples/form3-client/commons"
+	models "github.com/ccjy/interview-accountapi/examples/form3-client/models/account"
+	"github.com/ccjy/interview-accountapi/pkg/client"
 )
-
-// DeleteAccountByIdAndVersionParams defines parameters for DeleteAccountByIdAndVersion.
-type DeleteAccountByIdAndVersionParams struct {
-	// Current version number of the Account resource.
-	Version int64 `form:"version" json:"version"`
-}
-
-type DeleteAccountByWithResponse struct {
-	ErrorMessage string `json:"error_message,omitempty"`
-}
 
 // PageFilter defines model for PageFilter.
 type FilterPage struct {
@@ -38,3 +30,8 @@ type Filter struct {
 	Key   FilterKey
 	Value string
 }
+
+type GetAccountResponse = commons.ResponseData[models.AccountData]
+
+type GetAccountRequestContext = client.RequestContext[GetAccountResponse]
+type GetAccountResponseContext = client.ResponseContext[GetAccountResponse]

@@ -1,14 +1,14 @@
-package form3fakeaccountapi
+package form3client
 
 import (
 	"os"
 
-	"github.com/ccjy/interview-accountapi/examples/form3-fake-account-api/accounts"
+	"github.com/ccjy/interview-accountapi/examples/form3-client/accounts"
 	"github.com/ccjy/interview-accountapi/pkg/client"
 )
 
 type Form3Client struct {
-	AccountApi accounts.ClientDo
+	AccountApi accounts.AccountClientInterface
 }
 
 func New() *Form3Client {
@@ -35,6 +35,6 @@ func getHostNmae() string {
 	}
 }
 
-func (f *Form3Client) GetAccountApi() accounts.ClientDo {
+func (f *Form3Client) GetAccountApi() accounts.AccountClientInterface {
 	return f.AccountApi
 }
