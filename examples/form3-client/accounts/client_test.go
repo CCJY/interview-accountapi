@@ -54,7 +54,75 @@ func DefaultAccountData() *account.AccountData {
 	}
 }
 
-func TestAccountClient_CreateAccount(t *testing.T) {
+func TestAccountClient_CreateAccount_StatusCode(t *testing.T) {
+	t.Parallel()
+	type args struct {
+		account *types.CreateAccountRequest
+	}
+
+	type test struct {
+		name    string
+		args    args
+		want    int
+		wantErr bool
+	}
+
+	client := getAccountClient()
+
+	tests := []test{}
+
+	createAcountFn := func(name string, statusCode int) test {
+		account_data := DefaultAccountData()
+		data := &types.CreateAccountRequest{
+			Data: *account_data,
+		}
+
+		return test{
+			name: name,
+			args: args{
+				data,
+			},
+			want: statusCode,
+		}
+	}
+
+	for i := 0; i < 10; i++ {
+		tests = append(tests, createAcountFn(fmt.Sprintf("#%d", i), http.StatusCreated))
+	}
+
+	for _, tt := range tests {
+		tt.name = fmt.Sprintf("%s, status: %d", tt.name, http.StatusCreated)
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := client.CreateAccount(tt.args.account)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("AccountClient.CreateAccount() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got.StatusCode(), http.StatusCreated) {
+				t.Errorf("AccountClient.CreateAccount() = %v, want %v", got.ContextData.Data, tt.want)
+			}
+		})
+
+	}
+
+	for _, tt := range tests {
+		tt.name = fmt.Sprintf("%s, status: %d", tt.name, http.StatusConflict)
+		tt.want = http.StatusConflict
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := client.CreateAccount(tt.args.account)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("AccountClient.CreateAccount() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got.StatusCode(), http.StatusConflict) {
+				t.Errorf("AccountClient.CreateAccount() = %v, want %v", got.ContextData.Data, tt.want)
+			}
+		})
+
+	}
+}
+
+func TestAccountClient_CreateAccount_ValidResponseData(t *testing.T) {
 	t.Parallel()
 	type args struct {
 		account *types.CreateAccountRequest
@@ -86,8 +154,8 @@ func TestAccountClient_CreateAccount(t *testing.T) {
 		}
 	}
 
-	for i := 0; i < 10; i++ {
-		tests = append(tests, createAcountFn(fmt.Sprintf("create account #%d", i)))
+	for i := 0; i < 1; i++ {
+		tests = append(tests, createAcountFn(fmt.Sprintf("#%d", i)))
 	}
 
 	for _, tt := range tests {
@@ -104,7 +172,7 @@ func TestAccountClient_CreateAccount(t *testing.T) {
 	}
 }
 
-func TestAccountClient_GetAccount(t *testing.T) {
+func TestAccountClient_GetAccount_ValidResponseData(t *testing.T) {
 	t.Parallel()
 	type args struct {
 		account *types.CreateAccountRequest
@@ -154,7 +222,7 @@ func TestAccountClient_GetAccount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		n := fmt.Sprintf("get account against : %s", tt.name)
+		n := fmt.Sprintf("get account against %s", tt.name)
 		t.Run(n, func(t *testing.T) {
 			got, err := client.GetAccount(tt.args.account.Data.Id.String())
 			if (err != nil) != tt.wantErr {
@@ -168,7 +236,7 @@ func TestAccountClient_GetAccount(t *testing.T) {
 	}
 }
 
-func TestAccountClient_DeleteAccount(t *testing.T) {
+func TestAccountClient_DeleteAccount_204(t *testing.T) {
 	t.Parallel()
 	type args struct {
 		account *types.CreateAccountRequest
@@ -201,7 +269,7 @@ func TestAccountClient_DeleteAccount(t *testing.T) {
 	}
 
 	for i := 0; i < 10; i++ {
-		tests = append(tests, createAcountFn(fmt.Sprintf("create account #%d", i)))
+		tests = append(tests, createAcountFn(fmt.Sprintf("#%d", i)))
 	}
 
 	for _, tt := range tests {
@@ -218,7 +286,7 @@ func TestAccountClient_DeleteAccount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		n := fmt.Sprintf("get account against : %s", tt.name)
+		n := fmt.Sprintf("get account against create account %s", tt.name)
 		t.Run(n, func(t *testing.T) {
 			got, err := client.GetAccount(tt.args.account.Data.Id.String())
 			if (err != nil) != tt.wantErr {
@@ -232,7 +300,7 @@ func TestAccountClient_DeleteAccount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		n := fmt.Sprintf("delete account against : %s", tt.name)
+		n := fmt.Sprintf("delete account against create account %s", tt.name)
 		t.Run(n, func(t *testing.T) {
 			got, err := client.DeleteAccount(tt.args.account.Data.Id.String(), fmt.Sprint(*tt.args.account.Data.Version))
 			if (err != nil) != tt.wantErr {
@@ -246,3 +314,135 @@ func TestAccountClient_DeleteAccount(t *testing.T) {
 	}
 
 }
+
+func TestAccountClient_GetAccount_Timeout(t *testing.T) {
+	t.Parallel()
+	type args struct {
+		account *types.CreateAccountRequest
+	}
+
+	type test struct {
+		name    string
+		args    args
+		want    *types.CreateAccountRequest
+		wantErr bool
+	}
+
+	client := getAccountClient()
+
+	tests := []test{}
+
+	createAcountFn := func(name string) test {
+		account_data := DefaultAccountData()
+		data := &types.CreateAccountRequest{
+			Data: *account_data,
+		}
+
+		return test{
+			name: name,
+			args: args{
+				data,
+			},
+			want: data,
+		}
+	}
+
+	for i := 0; i < 10; i++ {
+		tests = append(tests, createAcountFn(fmt.Sprintf("create account #%d", i)))
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := client.CreateAccount(tt.args.account)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("AccountClient.CreateAccount() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got.ContextData.Data, tt.want.Data) {
+				t.Errorf("AccountClient.CreateAccount() = %v, want %v", got.ContextData.Data, tt.want.Data)
+			}
+		})
+	}
+
+	for _, tt := range tests {
+		n := fmt.Sprintf("get account against : %s", tt.name)
+		t.Run(n, func(t *testing.T) {
+			got, err := client.GetAccount(tt.args.account.Data.Id.String())
+			if (err != nil) != tt.wantErr {
+				t.Errorf("AccountClient.CreateAccount() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got.ContextData.Data, tt.want.Data) {
+				t.Errorf("AccountClient.CreateAccount() = %v, want %v", got.ContextData.Data, tt.want.Data)
+			}
+		})
+	}
+}
+
+// func TestAccountClient_GetAccount_WithContext(t *testing.T) {
+// 	t.Parallel()
+// 	type args struct {
+// 		account *types.CreateAccountRequest
+// 	}
+
+// 	type test struct {
+// 		name    string
+// 		args    args
+// 		want    *types.CreateAccountRequest
+// 		wantErr bool
+// 	}
+
+// 	client := getAccountClient()
+
+// 	tests := []test{}
+
+// 	createAcountFn := func(name string) test {
+// 		account_data := DefaultAccountData()
+// 		data := &types.CreateAccountRequest{
+// 			Data: *account_data,
+// 		}
+
+// 		return test{
+// 			name: name,
+// 			args: args{
+// 				data,
+// 			},
+// 			want: data,
+// 		}
+// 	}
+
+// 	for i := 0; i < 10; i++ {
+// 		tests = append(tests, createAcountFn(fmt.Sprintf("create account #%d", i)))
+// 	}
+
+// 	for _, tt := range tests {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			got, err := client.CreateAccount(tt.args.account)
+// 			if (err != nil) != tt.wantErr {
+// 				t.Errorf("AccountClient.CreateAccount() error = %v, wantErr %v", err, tt.wantErr)
+// 				return
+// 			}
+// 			if !reflect.DeepEqual(got.ContextData.Data, tt.want.Data) {
+// 				t.Errorf("AccountClient.CreateAccount() = %v, want %v", got.ContextData.Data, tt.want.Data)
+// 			}
+// 		})
+// 	}
+
+// 	for _, tt := range tests {
+// 		n := fmt.Sprintf("get account against : %s", tt.name)
+// 		t.Run(n, func(t *testing.T) {
+// 			ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+
+// 			defer cancel()
+
+// 			got, err := client.GetAccount(tt.args.account.Data.Id.String())
+// 			if (err != nil) != tt.wantErr {
+// 				t.Errorf("AccountClient.CreateAccount() error = %v, wantErr %v", err, tt.wantErr)
+// 				return
+// 			}
+// 			if !reflect.DeepEqual(got.ContextData.Data, tt.want.Data) {
+// 				t.Errorf("AccountClient.CreateAccount() = %v, want %v", got.ContextData.Data, tt.want.Data)
+// 			}
+// 		})
+// 	}
+// }
