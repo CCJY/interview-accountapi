@@ -5,13 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"strings"
 )
-
-type Encoding interface {
-	Marshal(data interface{}) (io.Reader, error)
-	UnMarshal(reader io.ReadCloser, dest interface{}) error
-}
 
 type HttpEncoding struct {
 }
@@ -29,9 +25,9 @@ func (e *HttpEncoding) Marshal(contentType string, data interface{}) (io.Reader,
 	}
 }
 
-func (e *HttpEncoding) UnMarshal(contentType string, reader io.ReadCloser, dest interface{}) error {
+func (e *HttpEncoding) UnMarshal(response *http.Response, reader io.ReadCloser, dest interface{}) error {
 	switch {
-	case strings.Contains(contentType, "json"):
+	case strings.Contains(response.Header.Get("Content-Type"), "json"):
 		bodyBytes, err := io.ReadAll(reader)
 
 		if err != nil {
@@ -46,6 +42,13 @@ func (e *HttpEncoding) UnMarshal(contentType string, reader io.ReadCloser, dest 
 	default:
 		return fmt.Errorf("invalid unmarshal")
 	}
+}
+
+// Custom Encoding
+
+type Encoding interface {
+	Marshal(data interface{}) (io.Reader, error)
+	UnMarshal(reader io.ReadCloser, dest interface{}) error
 }
 
 type JSONEncoding struct {

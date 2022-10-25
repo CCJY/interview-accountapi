@@ -91,15 +91,17 @@ func (r *RequestContext[T]) Do() (*ResponseContext[T], error) {
 	}
 
 	var rspData T
-	if r.CustomEncoding != nil {
-		err = req.CustomEncoding.UnMarshal(rsp.Body, &rspData)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		err = req.DefaultEncoding.UnMarshal(rsp.Header.Get("Content-Type"), rsp.Body, &rspData)
-		if err != nil {
-			return nil, err
+	if 0 < rsp.ContentLength {
+		if r.CustomEncoding != nil {
+			err = req.CustomEncoding.UnMarshal(rsp.Body, &rspData)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			err = req.DefaultEncoding.UnMarshal(rsp, rsp.Body, &rspData)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 	defer rsp.Body.Close()
