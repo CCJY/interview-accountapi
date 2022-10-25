@@ -4,7 +4,7 @@ import "net/http"
 
 type ResponseContext[T any] struct {
 	HttpResponse *http.Response
-	Data         T
+	ContextData         T
 }
 
 func (r *ResponseContext[T]) StatusCode() int {

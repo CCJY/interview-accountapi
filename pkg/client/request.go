@@ -107,7 +107,7 @@ func (r *RequestContext[T]) Do() (*ResponseContext[T], error) {
 	rspContext := ResponseContext[T]{}
 
 	rspContext.HttpResponse = rsp
-	rspContext.Data = rspData
+	rspContext.ContextData = rspData
 
 	if r.HookWhenAfterDo != nil {
 		err = r.HookWhenAfterDo(&rspContext)
