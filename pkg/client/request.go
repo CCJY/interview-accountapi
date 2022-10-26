@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -149,4 +150,30 @@ func NewRequest[T any](httpClient *Client, r *RequestContext[T]) RequestInterfac
 	r.HttpClient = httpClient.HttpClient
 	r.CustomEncoding = httpClient.Encoding
 	return r
+}
+
+type RequestContextModel struct {
+	Context       context.Context
+	Method        string
+	BaseUrl       string
+	OperationPath string
+	QueryParams   url.Values
+	PathParams    map[string]string
+	Header        http.Header
+	Body          interface{}
+}
+
+func NewRequestContext[T any](contextModel RequestContextModel) *RequestContext[T] {
+	return &RequestContext[T]{
+		Context: contextModel.Context,
+		Method:  contextModel.Method,
+		UrlBuilder: &Url{
+			BaseUrl:       contextModel.BaseUrl,
+			OperationPath: contextModel.OperationPath,
+			QueryParams:   contextModel.QueryParams,
+			PathParams:    contextModel.PathParams,
+		},
+		Header: contextModel.Header,
+		Body:   contextModel.Body,
+	}
 }
