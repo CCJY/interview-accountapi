@@ -4,7 +4,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/ccjy/interview-accountapi/examples/form3-client/accounts"
 	"github.com/ccjy/interview-accountapi/examples/form3-client/accounts/types"
 	"github.com/ccjy/interview-accountapi/examples/form3-client/models/account"
 	"github.com/google/uuid"
@@ -45,7 +44,7 @@ func TestForm3Client_CreateAccount(t *testing.T) {
 	createAcountFn := func(name string) test {
 		account_data := DefaultAccountData()
 		data := &types.CreateAccountRequest{
-			Data: *account_data,
+			Data: account_data,
 		}
 
 		return test{
@@ -87,28 +86,28 @@ func TestForm3Client_CreateAccount(t *testing.T) {
 
 }
 
-func TestForm3Client_GetAccountApi(t *testing.T) {
-	type fields struct {
-		AccountApi accounts.AccountClientInterface
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		want   accounts.AccountClientInterface
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			f := &Form3Client{
-				AccountApi: tt.fields.AccountApi,
-			}
-			if got := f.GetAccountApi(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Form3Client.GetAccountApi() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
+// func TestForm3Client_GetAccountApi(t *testing.T) {
+// 	type fields struct {
+// 		AccountApi accounts.AccountClientInterface
+// 	}
+// 	tests := []struct {
+// 		name   string
+// 		fields fields
+// 		want   accounts.AccountClientInterface
+// 	}{
+// 		// TODO: Add test cases.
+// 	}
+// 	for _, tt := range tests {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			f := &Form3Client{
+// 				AccountApi: tt.fields.AccountApi,
+// 			}
+// 			if got := f.GetAccountApi(); !reflect.DeepEqual(got, tt.want) {
+// 				t.Errorf("Form3Client.GetAccountApi() = %v, want %v", got, tt.want)
+// 			}
+// 		})
+// 	}
+// }
 
 // func DefaultRequestData() *account_types.CreateAccountBody {
 // 	return &account_types.CreateAccountBody{
