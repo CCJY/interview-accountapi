@@ -1,7 +1,7 @@
 package types
 
 import (
-	"github.com/ccjy/interview-accountapi/examples/form3-client/commons"
+	"github.com/ccjy/interview-accountapi/examples/form3/commons"
 	"github.com/ccjy/interview-accountapi/pkg/client"
 )
 

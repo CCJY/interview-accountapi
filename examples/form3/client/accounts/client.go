@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/ccjy/interview-accountapi/examples/form3-client/accounts/types"
+	"github.com/ccjy/interview-accountapi/examples/form3/client/accounts/types"
 	"github.com/ccjy/interview-accountapi/pkg/client"
 )
 

@@ -1,8 +1,8 @@
 package types
 
 import (
-	"github.com/ccjy/interview-accountapi/examples/form3-client/commons"
-	models "github.com/ccjy/interview-accountapi/examples/form3-client/models/account"
+	"github.com/ccjy/interview-accountapi/examples/form3/commons"
+	models "github.com/ccjy/interview-accountapi/examples/form3/models/account"
 	"github.com/ccjy/interview-accountapi/pkg/client"
 )
 

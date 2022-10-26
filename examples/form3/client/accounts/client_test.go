@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ccjy/interview-accountapi/examples/form3-client/accounts/types"
-	"github.com/ccjy/interview-accountapi/examples/form3-client/models/account"
+	"github.com/ccjy/interview-accountapi/examples/form3/client/accounts/types"
+	"github.com/ccjy/interview-accountapi/examples/form3/models/account"
 	"github.com/ccjy/interview-accountapi/pkg/client"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
@@ -99,13 +99,13 @@ func TestAccountClient_CreateAccount_StatusCode(t *testing.T) {
 		}
 	}
 
-	for i := 0; i < 1; i++ {
+	for i := 0; i < 10; i++ {
 		tests = append(tests, createAcountFn(fmt.Sprintf("#%d", i), http.StatusCreated))
 	}
 
 	for _, tt := range tests {
 		tt := tt
-		tt.name = fmt.Sprintf("%s, status: %d", tt.name, http.StatusCreated)
+		tt.name = fmt.Sprintf("%s expected status:%d", tt.name, http.StatusCreated)
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			got, err := client.CreateAccount(tt.args.account)
@@ -117,14 +117,18 @@ func TestAccountClient_CreateAccount_StatusCode(t *testing.T) {
 				t.Errorf("AccountClient.CreateAccount() = %v, want %v", got.ContextData.Data, tt.want)
 			}
 
-			got1, err := client.CreateAccount(tt.args.account)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("AccountClient.CreateAccount() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got1.StatusCode(), http.StatusConflict) {
-				t.Errorf("AccountClient.CreateAccount() = %v, want %v", got1.ContextData.Data, tt.want)
-			}
+			tt.name = fmt.Sprintf("exsting account expected status:%d Id:%s", http.StatusConflict, tt.args.account.Data.Id.String())
+			t.Run(tt.name, func(t *testing.T) {
+				got1, err := client.CreateAccount(tt.args.account)
+				if (err != nil) != tt.wantErr {
+					t.Errorf("AccountClient.CreateAccount() error = %v, wantErr %v", err, tt.wantErr)
+					return
+				}
+				if !reflect.DeepEqual(got1.StatusCode(), http.StatusConflict) {
+					t.Errorf("AccountClient.CreateAccount() = %v, want %v", got1.ContextData.Data, tt.want)
+				}
+			})
+
 		})
 
 	}
