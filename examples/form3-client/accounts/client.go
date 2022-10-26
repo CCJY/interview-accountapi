@@ -30,7 +30,6 @@ func New(client *client.Client) AccountClientInterface {
 }
 
 func (a *AccountClient) CreateAccount(createAccountRequest *types.CreateAccountRequest) (*types.CreateAccountResponseContext, error) {
-
 	return client.NewRequest(
 		a.Client,
 		&types.CreateAccountRequestContext{
