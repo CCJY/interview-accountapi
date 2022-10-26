@@ -1,7 +1,7 @@
 package commons
 
 type ResponseData[T any] struct {
-	Data         T      `json:"data,omitempty"`
+	Data         *T     `json:"data,omitempty"`
 	ErrorMessage string `json:"error_message,omitempty"`
 }
 
