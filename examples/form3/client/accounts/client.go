@@ -10,6 +10,10 @@ import (
 )
 
 type AccountClientInterface interface {
+	NewCreateAccountRequest(createAccountRequest *types.CreateAccountRequest) client.RequestInterface[types.CreateAccountResponse]
+	NewGetAccountRequest(accountId string) client.RequestInterface[types.GetAccountResponse]
+	NewDeleteAccountRequest(accountId string, version string) client.RequestInterface[types.DeleteAccountResponse]
+
 	CreateAccount(createAccountRequest *types.CreateAccountRequest) (*types.CreateAccountResponseContext, error)
 	GetAccount(accountId string) (*types.GetAccountResponseContext, error)
 	DeleteAccount(accountId string, version string) (*types.DeleteAccountResponseContext, error)
@@ -27,6 +31,55 @@ func New(client *client.Client) AccountClientInterface {
 	return &AccountClient{
 		Client: client,
 	}
+}
+
+func (a *AccountClient) NewCreateAccountRequest(createAccountRequest *types.CreateAccountRequest) client.RequestInterface[types.CreateAccountResponse] {
+	return client.NewRequest(
+		a.Client,
+		&types.CreateAccountRequestContext{
+			Method: http.MethodPost,
+			UrlBuilder: &client.Url{
+				BaseUrl:       a.Client.Config.BaseUrl,
+				OperationPath: OperationPathCreateAccount,
+			},
+			Body: createAccountRequest,
+		},
+	)
+}
+
+func (a *AccountClient) NewGetAccountRequest(accountId string) client.RequestInterface[types.GetAccountResponse] {
+	return client.NewRequest(
+		a.Client,
+		&types.GetAccountRequestContext{
+			Method: http.MethodGet,
+			UrlBuilder: &client.Url{
+				BaseUrl:       a.Client.Config.BaseUrl,
+				OperationPath: OperationPathGetAccount,
+				PathParams: map[string]string{
+					"account_id": accountId,
+				},
+			},
+		},
+	)
+}
+
+func (a *AccountClient) NewDeleteAccountRequest(accountId string, version string) client.RequestInterface[types.DeleteAccountResponse] {
+	return client.NewRequest(
+		a.Client,
+		&types.DeleteAccountRequestContext{
+			Method: http.MethodDelete,
+			UrlBuilder: &client.Url{
+				BaseUrl:       a.Client.Config.BaseUrl,
+				OperationPath: OperationPathDeleteAccount,
+				PathParams: map[string]string{
+					"account_id": accountId,
+				},
+				QueryParams: url.Values{
+					"version": []string{version},
+				},
+			},
+		},
+	)
 }
 
 func (a *AccountClient) CreateAccount(createAccountRequest *types.CreateAccountRequest) (*types.CreateAccountResponseContext, error) {
