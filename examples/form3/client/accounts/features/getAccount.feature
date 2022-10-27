@@ -32,14 +32,6 @@ Feature: Get Account
         When I call the method GetAccount with params "aewfaef"
         Then the response code should be 400
 
-    Scenario: should get empty data
-        When I call the method GetAccount with params ""
-        Then the response code should be 200
-        And the response should match json:
-            """
-            {}
-            """
-
     Scenario: should delete a account
         When I call the method DeleteAccount with params "a6c40f81-90d7-4d17-bbef-b9f48fc80acb" "0"
         Then the response code should be 204

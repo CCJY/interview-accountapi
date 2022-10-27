@@ -105,7 +105,7 @@ func (a *AccountClientFeature) iCallTheMethodCreateAccountWithParams(arg1 *godog
 	return nil
 }
 
-func (a *AccountClientFeature) iCallTheMethodCreateAccountContextWithParams(arg1 *godog.DocString) (err error) {
+func (a *AccountClientFeature) iCallTheMethodCreateAccountWithContextWithParams(arg1 *godog.DocString) (err error) {
 	Client := a.getAccountClientTest(a.baseUrl, a.time)
 	var output bytes.Buffer
 
@@ -161,6 +161,30 @@ func (a *AccountClientFeature) iCallTheMethodDeleteAccountWithParams(arg1 string
 	return nil
 }
 
+func (a *AccountClientFeature) iCallTheMethodDeleteAccountWithContextWithParams(arg1 string, arg2 int) (err error) {
+	Client := a.getAccountClientTest(a.baseUrl, a.time)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(a.time)*time.Millisecond)
+
+	defer cancel()
+	got, err := Client.DeleteAccountWithContext(ctx, arg1, fmt.Sprint(arg2))
+
+	if err != nil {
+		a.errMessage = err.Error()
+		return nil
+	}
+
+	rsp, err := json.Marshal(got.ContextData)
+	if err != nil {
+		return err
+	}
+
+	a.statusCode = got.StatusCode()
+	a.rsp = rsp
+
+	return nil
+}
+
 func (a *AccountClientFeature) iCallTheMethodGetAccountWithParams(arg1 string) error {
 	Client := a.getAccountClientTest(a.baseUrl, a.time)
 
@@ -168,6 +192,30 @@ func (a *AccountClientFeature) iCallTheMethodGetAccountWithParams(arg1 string) e
 	if err != nil {
 		a.errMessage = err.Error()
 		return err
+	}
+
+	rsp, err := json.Marshal(got.ContextData)
+	if err != nil {
+		return err
+	}
+
+	a.statusCode = got.StatusCode()
+	a.rsp = rsp
+
+	return nil
+}
+
+func (a *AccountClientFeature) iCallTheMethodGetAccountWithContextWithParams(arg1 string) (err error) {
+	Client := a.getAccountClientTest(a.baseUrl, a.time)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(a.time)*time.Millisecond)
+
+	defer cancel()
+	got, err := Client.GetAccountWithContext(ctx, arg1)
+
+	if err != nil {
+		a.errMessage = err.Error()
+		return nil
 	}
 
 	rsp, err := json.Marshal(got.ContextData)
@@ -245,10 +293,12 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	ctx.Step(`^ID generated$`, api.iDGenerated)
 	ctx.Step(`^^MockServer has a response delay time for (\d+) milliseconds$$`, api.mockServerHasAResponseDelayTimeForMilliseconds)
 	ctx.Step(`^Timeout (\d+) milliseconds$`, api.timeoutMilliseconds)
-	ctx.Step(`^I call the method CreateAccountContext with params$`, api.iCallTheMethodCreateAccountContextWithParams)
+	ctx.Step(`^I call the method CreateAccountWithContext with params$`, api.iCallTheMethodCreateAccountWithContextWithParams)
 	ctx.Step(`^I call the method CreateAccount with params$`, api.iCallTheMethodCreateAccountWithParams)
+	ctx.Step(`^I call the method DeleteAccountWithContext with params "([^"]*)" "(\d+)"$`, api.iCallTheMethodDeleteAccountWithContextWithParams)
 	ctx.Step(`^I call the method DeleteAccount with params "([^"]*)" "(\d+)"$`, api.iCallTheMethodDeleteAccountWithParams)
 	ctx.Step(`^I call the method GetAccount with params "([^"]*)"$`, api.iCallTheMethodGetAccountWithParams)
+	ctx.Step(`^I call the method GetAccountWithContext with params "([^"]*)"$`, api.iCallTheMethodGetAccountWithContextWithParams)
 	ctx.Step(`^the response code should be (\d+)$`, api.theResponseCodeShouldBe)
 	ctx.Step(`^the response should match json:$`, api.theResponseShouldMatchJson)
 	ctx.Step(`^the response should contain error for "([^"]*)"$`, api.theResponseShouldContainErrorFor)
