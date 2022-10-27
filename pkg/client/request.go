@@ -136,7 +136,14 @@ func (r *RequestContext[T]) WhenBeforeDo(hook func(*RequestContext[T]) error) *R
 	return r
 }
 
+func (r *RequestContext[T]) WithContext(ctx context.Context) *RequestContext[T] {
+	r.Context = ctx
+
+	return r
+}
+
 type RequestInterface[T any] interface {
+	WithContext(context.Context) *RequestContext[T]
 	WhenBeforeDo(func(*RequestContext[T]) error) *RequestContext[T]
 	Do() (*ResponseContext[T], error)
 	WhenAfterDo(func(*ResponseContext[T]) error) *RequestContext[T]
