@@ -4,6 +4,7 @@ Feature: Client Retry Tests
     Scenario: after failing twice, it succeeds at the end
         Given Context of client has time limt for 100 ms
         Given MockServer has 150 ms of latency and 50 ms at the end
+        And   MockServer returns the 201 response code
         Given RetryAttempt 3 with RetryWait 3 seconds per each request
         When I call the method NewCreateAccountRequest with params
             """
@@ -31,7 +32,7 @@ Feature: Client Retry Tests
             last request should get the status code 201 and valid data
             """
         Then the response code should be 201
-        Then the response should match josn:
+        Then the response should match json:
             """
             {
                 "data": {
@@ -50,4 +51,3 @@ Feature: Client Retry Tests
                 }
             }
             """
-

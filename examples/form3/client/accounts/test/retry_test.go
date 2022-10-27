@@ -3,6 +3,8 @@ package test
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -18,14 +20,26 @@ func (r *AccountClientFeature) contextOfClientHasTimeLimtForMs(arg1 int) error {
 	return nil
 }
 
-func (r *AccountClientFeature) iCallTheMethodNewCreateAccountRequestWithParams(arg1 *godog.DocString) error {
+func (r *AccountClientFeature) iCallTheMethodNewCreateAccountRequestWithParams(arg1 *godog.DocString) (err error) {
 	Client := r.getAccountClientTest(r.baseUrl, r.timeoutMs)
 	var reqData types.CreateAccountRequest
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeoutMs)*time.Millisecond)
+	err = json.Unmarshal([]byte(arg1.Content), &reqData)
+	if err != nil {
+		return err
+	}
 
-	defer cancel()
-	got, err := Client.NewCreateAccountRequest(&reqData).WithContext(ctx).Do()
+	var got *types.CreateAccountResponseContext
+
+	for i := 0; i < r.retryAttempts; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeoutMs)*time.Millisecond)
+		defer cancel()
+		fmt.Printf("request retry: %d", i)
+		got, err = Client.NewCreateAccountRequest(&reqData).WithContext(ctx).Do()
+		if err == nil {
+			break
+		}
+	}
 
 	if err != nil {
 		r.errMessage = err.Error()
@@ -43,15 +57,31 @@ func (r *AccountClientFeature) iCallTheMethodNewCreateAccountRequestWithParams(a
 	return nil
 }
 
+func (retry *AccountClientFeature) mockServerReturnsTheResponseCode(arg1 int) error {
+	retry.mockResponseCode = arg1
+	return nil
+}
+
 func (retry *AccountClientFeature) mockServerHasMsOfLatencyAndMsAtTheEnd(arg1, arg2 int) error {
 	s := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if retry.retried < retry.retryAttempts {
-				time.Sleep(time.Duration(arg1) * time.Millisecond)
-			} else {
-				time.Sleep(time.Duration(arg2) * time.Millisecond)
-			}
 			retry.retried += 1
+			if retry.retried < retry.retryAttempts {
+				fmt.Printf("retry: %d < retry.retryAttempts: %d", retry.retried, retry.retryAttempts)
+				time.Sleep(time.Duration(arg1) * time.Millisecond)
+				return
+			}
+			fmt.Printf("last retry: %d retryAttempts: %d", retry.retried, retry.retryAttempts)
+			time.Sleep(time.Duration(arg2) * time.Millisecond)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(retry.mockResponseCode)
+			bodyBytes, err := io.ReadAll(r.Body)
+			if err != nil {
+				return
+			}
+			defer r.Body.Close()
+			fmt.Print(string(bodyBytes))
+			fmt.Fprintln(w, string(bodyBytes))
 		}),
 	)
 
@@ -79,7 +109,9 @@ func InitializeScenario_Retry(ctx *godog.ScenarioContext) {
 	}
 	ctx.Step(`^Context of client has time limt for (\d+) ms$`, api.contextOfClientHasTimeLimtForMs)
 	ctx.Step(`^MockServer has (\d+) ms of latency and (\d+) ms at the end$`, api.mockServerHasMsOfLatencyAndMsAtTheEnd)
+	ctx.Step(`^MockServer returns the (\d+) response code$`, api.mockServerReturnsTheResponseCode)
 	ctx.Step(`^RetryAttempt (\d+) with RetryWait (\d+) seconds per each request$`, api.retryAttemptWithRetryWaitSecondsPerEachRequest)
+	ctx.Step(`^I call the method DeleteAccount with params "([^"]*)" "(\d+)"$`, api.iCallTheMethodDeleteAccountWithParams)
 	ctx.Step(`^I call the method NewCreateAccountRequest with params$`, api.iCallTheMethodNewCreateAccountRequestWithParams)
 	ctx.Step(`^the request is attempted as many times as a given request as$`, api.theRequestIsAttemptedAsManyTimesAsAGivenRequestAs)
 	ctx.Step(`^the response code should be (\d+)$`, api.theResponseCodeShouldBe)

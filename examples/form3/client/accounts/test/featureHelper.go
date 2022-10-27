@@ -20,15 +20,16 @@ import (
 )
 
 type AccountClientFeature struct {
-	baseUrl        string
-	timeoutMs      int
-	retried        int
-	retryAttempts  int
-	retryWaitMs    int
-	errMessage     string
-	statusCode     int
-	rsp            []byte
-	generatedInput *GeneratedInput
+	baseUrl          string
+	timeoutMs        int
+	retried          int
+	retryAttempts    int
+	retryWaitMs      int
+	mockResponseCode int
+	errMessage       string
+	statusCode       int
+	rsp              []byte
+	generatedInput   *GeneratedInput
 }
 
 type GeneratedInput struct {
