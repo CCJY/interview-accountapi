@@ -58,5 +58,10 @@ Feature: Delete Account
             """
             {}
             """
-
-
+    Scenario: does not allow to delete an account if not found the account
+        When I call the method DeleteAccount with params "6052482c-ad56-4268-a046-23fc0eed6f51" "0"
+        Then the response code should be 404
+        And the response should match json:
+            """
+            {}
+            """
