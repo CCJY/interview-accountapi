@@ -91,7 +91,7 @@ func TestFeatures_Retry(t *testing.T) {
 		ScenarioInitializer: InitializeScenario_Retry,
 		Options: &godog.Options{
 			Format:   "pretty",
-			Paths:    []string{"features/retry"},
+			Paths:    []string{"../features/retry"},
 			TestingT: t, // Testing instance that will run subtests.
 		},
 	}
