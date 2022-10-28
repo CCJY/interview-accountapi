@@ -13,9 +13,10 @@ var (
 )
 
 type RequestContext[T any] struct {
-	HttpClient      *http.Client
-	HttpRequest     *http.Request
-	Context         context.Context
+	HttpClient  *http.Client
+	HttpRequest *http.Request
+	Context     context.Context
+	// if set the CustomerEncoding, the DefaultEncoding is ignored
 	CustomEncoding  Encoding
 	DefaultEncoding HttpEncoding
 	Header          http.Header
@@ -133,14 +134,12 @@ func (r *RequestContext[T]) Do() (*ResponseContext[T], error) {
 }
 
 func (r *RequestContext[T]) WhenAfterDo(hook func(*ResponseContext[T]) error) *RequestContext[T] {
-
 	r.HookWhenAfterDo = hook
 
 	return r
 }
 
 func (r *RequestContext[T]) WhenBeforeDo(hook func(*RequestContext[T]) error) *RequestContext[T] {
-
 	r.HookWhenBeforeDo = hook
 
 	return r
