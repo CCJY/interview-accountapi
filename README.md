@@ -43,7 +43,9 @@ Regarding the client library, I tried to make it general. As I am starting Go fo
 &nbsp;
 
 ## Example Use
+`DELETE` and `GET` account can also be used in the same way.
 
+- If you don't need an option, you can use it.
 ```go
 got, err := client.CreateAccount(&account)
 if err != nil {
@@ -52,18 +54,21 @@ if err != nil {
 fmt.Println(got.ContextData.Data.Id)
 ```
 
+- This can be used if a retry is required. Additionally, you can set a retry when you create the Client.
 ```go
 got, err = Client.NewCreateAccountRequest(&reqData).WithRetry(client.Retry{
             RetryInterval: r.retryWaitMs,
             RetryMax:      r.retryAttempts,
-        }).WithContext(ctx).Do()
+        }).Do()
 ```
 
+
+- This is used when using context.
 ```go
 got, err = client.CreateAccountWithContext(ctx, &account)
 ```
 
-
+- This is used when you want to manipulate data.
 ```go
 got, err = client.NewCreateAccountRequest(&account).
     	WhenBeforeDo(func(rc *types.CreateAccountRequestContext) error {
