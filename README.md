@@ -11,6 +11,8 @@ Regarding the client library, I tried to make it general. As I am starting Go fo
 
 ## Form3 Take Home Exercise
 
+![test_report](./test_report.html)
+
 <details><summary>Directory Structure</summary>
 
 <p>
