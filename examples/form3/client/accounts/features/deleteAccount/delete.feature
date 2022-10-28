@@ -1,6 +1,10 @@
-Feature: Delete Account
-    Create Account
+Feature: Delete Account for Form3 API
+    Delete Account -> Form3 API
+    1. does not allow to delete a account
+    2. should delete a account
+    3. does not allow to delete an account if not found the account
 
+    # this scenario for tests
     Scenario: should create a account
         When I call the method CreateAccount with params
             """

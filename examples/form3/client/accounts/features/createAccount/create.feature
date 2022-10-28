@@ -1,5 +1,8 @@
-Feature: Create Account
-    Create Account
+Feature: Create Account for Form3 API
+    Create Account -> Form3 API
+    1. should create a account
+    2. does not allow to create a existing account resource
+    3. does not allow to create an account resource by invalid data
 
     Background:
         Given ID generated

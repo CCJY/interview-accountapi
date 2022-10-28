@@ -1,6 +1,7 @@
-Feature: Get All Account
-    Create Account
+Feature: Get All Account for Form3 API
+    1. should get all account
 
+    # this scenario for tests
     Scenario: should create a account
         When I call the method CreateAccount with params
             """
@@ -28,6 +29,7 @@ Feature: Get All Account
         When I call the method GetAllAccount
         Then the response code should be 200
 
+    # this scenario for tests
     Scenario: should delete a account
         When I call the method DeleteAccount with params "a6c40f81-90d7-4d17-bbef-b9f48fc80acb" "0"
         Then the response code should be 204

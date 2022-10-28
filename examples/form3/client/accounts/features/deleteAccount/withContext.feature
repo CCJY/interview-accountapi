@@ -1,5 +1,7 @@
 Feature: Client Context
     Timeout specifies a time limit for requests made by this Client.
+    1. Use context.Context
+    2. Use MockServer
 
     Scenario: should get error "deadline exceeded" when client with context has time limit
         Given Timeout 100 milliseconds

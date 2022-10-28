@@ -1,6 +1,9 @@
-Feature: Get Account
-    Create Account
+Feature: Get Account for Form3 API
+    Get Account -> 
+    1. should get a account
+    2. should not get a account
 
+    # this scenario for tests
     Scenario: should create a account
         When I call the method CreateAccount with params
             """
@@ -32,6 +35,7 @@ Feature: Get Account
         When I call the method GetAccount with params "aewfaef"
         Then the response code should be 400
 
+    # this scenario for tests
     Scenario: should delete a account
         When I call the method DeleteAccount with params "a6c40f81-90d7-4d17-bbef-b9f48fc80acb" "0"
         Then the response code should be 204
