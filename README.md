@@ -7,7 +7,7 @@ I started Go for the first time. It was interesting because it was a little diff
 
 In terms of microservices environments, data may or may not be sent or received for unexpected reasons. It should require implement a retry function on the client side to increase the transmission probability. In addition, in order to reduce unnecessary traffic, it is necessary to check in advance whether data is valid on the client side. Additionally, in a microservices environment, distributed message queues should be used to guarantee the requested data; it can use things like Kafka, Nats and Redis. Also, it can be used common event delivery methods like CloudEvents with Knative to communicate between services and use pub/sub. Container cold start and warm start in Cloud with Kubernetes environment will also have an impact in microservices environment. 
 
-
+Regarding the client library, I tried to make it general. As I am starting Go for the first time, I decided to try generic programming supported from 1.18. I tried to make the request and response data generic.
 
 ## Form3 Take Home Exercise
 
