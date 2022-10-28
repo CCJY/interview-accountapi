@@ -42,10 +42,10 @@ Here is a summary of some of the home exercise.
 </details>
 &nbsp;
 
-<details><summary>Example Use<summary>
+
+<details><summary>Example Use</summary>
 
 <p>
-
 
 `DELETE` and `GET` account can also be used in the same way.
 
@@ -85,6 +85,7 @@ got, err = client.NewCreateAccountRequest(&account).
 
 </p>
 </details>
+
 &nbsp;
 
 ## Tests
