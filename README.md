@@ -165,25 +165,6 @@ The finished solution **should:**
 - Have tests that run from `docker-compose up` - our reviewers will run `docker-compose up` to assess if your tests pass.
 >> I included my app in this file and passed the tests I implemented by docker-compose up.
 
-
-Transport important
-Should not use default transport becuase caches connections can have unnecessary connections
-
-
-Production Requirements
-
-Reliable microservices
-
-Possible to different urls
-
-application constiner size
-
-Implement client library
-
-
-
-
-
 ## How to submit your exercise
 
 - Include your name in the README. If you are new to Go, please also mention this in the README so that we can consider this when reviewing your exercise
