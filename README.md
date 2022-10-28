@@ -1,25 +1,22 @@
-## Junyoung CHoi
+# Junyoung CHoi
 
 The project started on October 18, 2022.
 
-I started Go for the first time. It was interesting because it was a little different from other languages that I used before. I think I've implemented an essential interface, at least at the production level. I think I'll get better results if I test it a little more and implement it more and refactor it. First of all, I have created unit tests and BDD scenarios. It's my first time at Go, so I don't know the good directory structure yet, but I organized it as follows.
+I started Go for the first time. It was interesting because it was a little different from other languages that I used before. 
 
 
-<details><summary>client api</summary>
-```go
-got, err = Client.NewCreateAccountRequest(&reqData).WithRetry(client.Retry{
-            RetryInterval: r.retryWaitMs,
-            RetryMax:      r.retryAttempts,
-        }).WithContext(ctx).Do()
-```
-```go
-got, err := client.CreateAccount(tt.args.account)
-```
-</details>
+In terms of microservices environments, data may or may not be sent or received for unknown reasons. It should require implement a retry function on the client side to increase the transmission probability. In addition, in order to reduce unnecessary traffic, it is necessary to check in advance whether data is valid on the client side. Additionally, in a microservices environment, distributed message queues should be used to guarantee the requested data; it can use things like Kafka, Nats and Redis. Also, it can be used common event delivery methods like CloudEvents with Knative to communicate between services and use pub/sub. Container cold start and warm start in Cloud with Kubernetes environment will also have an impact in microservices environment. 
 
 
 
-### Directory Structure
+## Form3 Take Home Exercise
+
+<details><summary>Directory Structure</summary>
+
+<p>
+
+> I organized it as follows.
+
 ```
 |-- examples
 |   `-- form3
@@ -41,6 +38,56 @@ got, err := client.CreateAccount(tt.args.account)
 |   `-- db
 - - models/accounts
 ```
+
+</p>
+</details>
+&nbsp;
+
+## Example Use
+
+```go
+got, err := client.CreateAccount(&account)
+if err != nil {
+    ...
+}
+fmt.Println(got.ContextData.Data.Id)
+```
+
+```go
+got, err = Client.NewCreateAccountRequest(&reqData).WithRetry(client.Retry{
+            RetryInterval: r.retryWaitMs,
+            RetryMax:      r.retryAttempts,
+        }).WithContext(ctx).Do()
+```
+
+```go
+got, err = client.CreateAccountWithContext(ctx, &account)
+```
+
+
+```go
+got, err = client.NewCreateAccountRequest(&account).
+    	WhenBeforeDo(func(rc *types.CreateAccountRequestContext) error {
+            ... // validate
+			return nil
+		}).WhenAfterDo(func(rc *types.CreateAccountResponseContext) error {
+            ...
+		return nil
+	}).Do()
+```
+
+
+## Tests
+The client used fake account API, which is provided as a Docker container in the file `docker-compose.yaml` for operations HTTP Methods `CREATE`, `DELETE`, and `GET`, and Mockserver used it for context, timeout, and retry.
+### Requirement Packages
+- testing package for TDD
+- [godog](https://github.com/cucumber/godog) for BDD
+
+
+<details><summary>Scenario Example</summary>
+<p>
+
+
 ### BDD Example
 ```
 
@@ -96,6 +143,29 @@ got, err := client.CreateAccount(tt.args.account)
             """
 
 ```
+
+</p>
+</details>
+
+<br>
+
+# Form3 Take Home Exercise
+
+### Shoulds
+
+The finished solution **should:**
+- Be written in Go.
+>> I have used the latest version of Golang (1.19)
+- Use the `docker-compose.yaml` of this repository.
+- Be a client library suitable for use in another software project.
+>> The client library is made to be general. Account API related contents are in examples/form3.
+- Implement the `Create`, `Fetch`, and `Delete` operations on the `accounts` resource.
+- Be well tested to the level you would expect in a commercial environment. Note that tests are expected to run against the provided fake account API.
+- Be simple and concise.
+- Have tests that run from `docker-compose up` - our reviewers will run `docker-compose up` to assess if your tests pass.
+>> I included my app in this file and passed the tests I implemented by docker-compose up.
+
+
 
 https://github.com/form3tech-oss/interview-accountapi/
 
