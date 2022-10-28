@@ -22,7 +22,7 @@ func getHostNmae() string {
 	env := os.Getenv("APP-ENV")
 	switch env {
 	case "docker":
-		return "http://accountapi:8080"
+		return "http://host.docker.internal:8080"
 	default:
 		return "http://127.0.0.1:8080"
 	}
