@@ -1,7 +1,6 @@
 package client
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,14 +11,15 @@ import (
 type HttpEncoding struct {
 }
 
-func (e *HttpEncoding) Marshal(contentType string, data interface{}) (io.Reader, error) {
+func (e *HttpEncoding) Marshal(contentType string, data interface{}) ([]byte, error) {
 	switch {
 	case strings.Contains(contentType, "json"):
 		buf, err := json.Marshal(data)
 		if err != nil {
 			return nil, err
 		}
-		return bytes.NewReader(buf), nil
+		return buf, nil
+		// return bytes.NewReader(buf), nil
 	default:
 		return nil, fmt.Errorf("invalid marshal")
 	}
@@ -47,20 +47,20 @@ func (e *HttpEncoding) UnMarshal(response *http.Response, reader io.ReadCloser, 
 // Custom Encoding
 
 type Encoding interface {
-	Marshal(data interface{}) (io.Reader, error)
+	Marshal(data interface{}) ([]byte, error)
 	UnMarshal(reader io.ReadCloser, dest interface{}) error
 }
 
 type JSONEncoding struct {
 }
 
-func (e *JSONEncoding) Marshal(data interface{}) (io.Reader, error) {
+func (e *JSONEncoding) Marshal(data interface{}) ([]byte, error) {
 	buf, err := json.Marshal(data)
 	if err != nil {
 		return nil, err
 	}
 
-	return bytes.NewReader(buf), nil
+	return buf, err
 }
 
 func (e *JSONEncoding) UnMarshal(reader io.ReadCloser, dest interface{}) error {

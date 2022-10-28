@@ -10,8 +10,9 @@ import (
 )
 
 type Retry struct {
-	RetryInterval time.Duration
+	RetryInterval int
 	RetryMax      int
+	Retried       int
 }
 
 type RetryResult struct {
@@ -41,6 +42,7 @@ func (r *Retry) RetryRequest(client *http.Client, request *http.Request, origina
 	// https://github.com/golang/go/issues/19653
 
 	for retried := 0; retried < r.RetryMax; retried++ {
+		r.Retried = retried
 		select {
 		case result = <-ch:
 			var isError bool
@@ -113,6 +115,10 @@ func (r *Retry) Do(client *http.Client, request *http.Request, originalBody []by
 
 func (r *Retry) ShouldRetry(result *RetryResult) bool {
 	var isError bool
+
+	if r.RetryMax < 1 {
+		return isError
+	}
 
 	// If client.Do() has an error, response is nil
 	if result.Response != nil {

@@ -1,11 +1,11 @@
 package client
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"net/http"
 	"net/url"
-	"time"
 )
 
 var (
@@ -26,9 +26,9 @@ type RequestContext[T any] struct {
 	HookWhenBeforeDo func(*RequestContext[T]) error
 	HookWhenAfterDo  func(*ResponseContext[T]) error
 
-	Retry         bool
-	RetryInterval time.Duration
-	RetryMax      int
+	Retry Retry
+
+	OriginalBody []byte
 }
 
 func (r *RequestContext[T]) buildBody() (io.Reader, error) {
@@ -37,14 +37,23 @@ func (r *RequestContext[T]) buildBody() (io.Reader, error) {
 	}
 
 	if r.CustomEncoding != nil {
-		return r.CustomEncoding.Marshal(r.Body)
+		buf, err := r.CustomEncoding.Marshal(r.Body)
+		if err != nil {
+			return nil, err
+		}
+		return bytes.NewReader(buf), nil
 	}
 
 	contentType := r.Header.Get("Content-Type")
 	if contentType == "" {
 		contentType = DefaultContentType
 	}
-	return r.DefaultEncoding.Marshal(contentType, r.Body)
+	buf, err := r.DefaultEncoding.Marshal(contentType, r.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return bytes.NewReader(buf), nil
 }
 
 func (r *RequestContext[T]) newRequest() (*RequestContext[T], error) {
@@ -86,7 +95,8 @@ func (r *RequestContext[T]) Do() (*ResponseContext[T], error) {
 		}
 	}
 
-	rsp, err := r.HttpClient.Do(req.HttpRequest)
+	rsp, err := r.Retry.Do(r.HttpClient, r.HttpRequest, r.OriginalBody)
+	// rsp, err := r.HttpClient.Do(req.HttpRequest)
 	if err != nil {
 		return nil, err
 	}
@@ -142,8 +152,15 @@ func (r *RequestContext[T]) WithContext(ctx context.Context) *RequestContext[T] 
 	return r
 }
 
+func (r *RequestContext[T]) WithRetry(retry Retry) *RequestContext[T] {
+	r.Retry = retry
+
+	return r
+}
+
 type RequestInterface[T any] interface {
 	WithContext(context.Context) *RequestContext[T]
+	WithRetry(retry Retry) *RequestContext[T]
 	WhenBeforeDo(func(*RequestContext[T]) error) *RequestContext[T]
 	Do() (*ResponseContext[T], error)
 	WhenAfterDo(func(*ResponseContext[T]) error) *RequestContext[T]

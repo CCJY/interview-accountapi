@@ -23,7 +23,7 @@ type TestServerResponse struct {
 
 func TestRetry_RetryRequest(t *testing.T) {
 	type fields struct {
-		RetryInterval time.Duration
+		RetryInterval int
 		RetryMax      int
 	}
 
