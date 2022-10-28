@@ -78,9 +78,10 @@ got, err = client.NewCreateAccountRequest(&account).
 
 ## Tests
 The client used fake account API, which is provided as a Docker container in the file `docker-compose.yaml` for operations HTTP Methods `CREATE`, `DELETE`, and `GET`, and Mockserver used it for context, timeout, and retry.
-### Requirement Packages
+### Used Packages
 - testing package for TDD
 - [godog](https://github.com/cucumber/godog) for BDD
+- [lo](https://github.com/samber/lo) 
 
 
 <details><summary>Scenario Example</summary>
