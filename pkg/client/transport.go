@@ -5,6 +5,14 @@ import (
 	"sync"
 )
 
+// https://stuartleeks.com/posts/connection-re-use-in-golang-with-http-client/
+// https://github.com/usbarmory/tamago-go/blob/c117e5d62adf00b99dc5cb9e7e0d3105d87fb09d/src/net/http/transport.go#L63-L66
+// By default, Transport caches connections for future re-use.
+// This may leave many open connections when accessing many hosts.
+// This behavior can be managed using Transport’s CloseIdleConnections method and
+// the MaxIdleConnsPerHost and DisableKeepAlives fields.
+// if create new transport per one transaction,
+// may be occured error for maximum socket connections
 type Transport struct {
 	Transport *http.Transport
 }
