@@ -5,9 +5,9 @@ The project started on October 18, 2022.
 
 I started Go for the first time. It was interesting because it was a little different from other languages that I used before. 
 
-For more details, I have used the latest version of Golang (1.19) and tried to make it general for other projects. The sources in the pkg/client are general library, and the Form3 client in the examples is the result of using them. when I made this project, As I am starting Go for the first time, I decided to try generic programming supported from 1.18. I tried to make the request and response data generic. In addition, I included my app in `docker-compose.yml` and passed the tests I implemented by docker-compose up.
+For more details, I have used the latest version of Golang (1.19) and tried to make it general for other projects. The sources in the pkg/client are general library, and the Form3 client in the examples is the result of using them. When I made this project, as I am starting Go for the first time, I decided to try generic programming supported from 1.18. I tried to make the request and response data generic. In addition, I included my app in `docker-compose.yml` and passed the tests I implemented by docker-compose up.
 
-# Summary for Form3 Take Home Exercise
+# Summary
 Here is a summary of some of the home exercise.
 
 <details><summary>Directory Structure</summary>
@@ -42,7 +42,11 @@ Here is a summary of some of the home exercise.
 </details>
 &nbsp;
 
-## Example Use
+<details><summary>Example Use<summary>
+
+<p>
+
+
 `DELETE` and `GET` account can also be used in the same way.
 
 - If you don't need an option, you can use it.
@@ -62,7 +66,6 @@ got, err = Client.NewCreateAccountRequest(&reqData).WithRetry(client.Retry{
         }).Do()
 ```
 
-
 - This is used when using context.
 ```go
 got, err = client.CreateAccountWithContext(ctx, &account)
@@ -80,6 +83,9 @@ got, err = client.NewCreateAccountRequest(&account).
 	}).Do()
 ```
 
+</p>
+</details>
+&nbsp;
 
 ## Tests
 The client used fake account API, which is provided as a Docker container in the file `docker-compose.yaml` for operations HTTP Methods `CREATE`, `DELETE`, and `GET`, and Mockserver used it for context, timeout, and retry.
