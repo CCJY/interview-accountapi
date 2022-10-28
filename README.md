@@ -5,14 +5,11 @@ The project started on October 18, 2022.
 
 I started Go for the first time. It was interesting because it was a little different from other languages that I used before. 
 
-For more details, I have used the latest version of Golang (1.19) and tried to make it general for other projects. The sources in the pkg/client are general library, and the Form3 client in the examples is the result of using them. when I made this project, As I am starting Go for the first time, I decided to try generic programming supported from 1.18. I tried to make the request and response data generic. 
+For more details, I have used the latest version of Golang (1.19) and tried to make it general for other projects. The sources in the pkg/client are general library, and the Form3 client in the examples is the result of using them. when I made this project, As I am starting Go for the first time, I decided to try generic programming supported from 1.18. I tried to make the request and response data generic. In addition, I included my app in `docker-compose.yml` and passed the tests I implemented by docker-compose up.
 
+# Summary for Form3 Take Home Exercise
+Here is a summary of some of the home exercise.
 
-### What I expect in microservices environments
-
-In terms of microservices environments, data may or may not be sent or received for unexpected reasons. It should require implement a retry function on the client side to increase the transmission probability. In addition, in order to reduce unnecessary traffic, it is necessary to check in advance whether data is valid on the client side. Additionally, in a microservices environment, distributed message queues should be used to guarantee the requested data; it can use things like Kafka, Nats and Redis. Also, it can be used common event delivery methods like CloudEvents with Knative to communicate between services and use pub/sub. Container cold start and warm start in Cloud with Kubernetes environment will also have an impact in microservices environment.
-
-## Form3 Take Home Exercise
 <details><summary>Directory Structure</summary>
 
 <p>
@@ -159,21 +156,23 @@ The client used fake account API, which is provided as a Docker container in the
 ![TEST](./test_report_img.png)
 <br>
 
+
+## What I expect in microservices environments
+
+In terms of microservices environments, data may or may not be sent or received for unexpected reasons. It should require implement a retry function on the client side to increase the transmission probability. In addition, in order to reduce unnecessary traffic, it is necessary to check in advance whether data is valid on the client side. Additionally, in a microservices environment, distributed message queues should be used to guarantee the requested data; it can use things like Kafka, Nats and Redis. Also, it can be used common event delivery methods like CloudEvents with Knative to communicate between services and use pub/sub. Container cold start and warm start in Cloud with Kubernetes environment will also have an impact in microservices environment.
+
 # Form3 Take Home Exercise
 
 ### Shoulds
 
 The finished solution **should:**
 - Be written in Go.
->> I have used the latest version of Golang (1.19)
 - Use the `docker-compose.yaml` of this repository.
 - Be a client library suitable for use in another software project.
->> The client library is made to be general. Account API related contents are in examples/form3.
 - Implement the `Create`, `Fetch`, and `Delete` operations on the `accounts` resource.
 - Be well tested to the level you would expect in a commercial environment. Note that tests are expected to run against the provided fake account API.
 - Be simple and concise.
 - Have tests that run from `docker-compose up` - our reviewers will run `docker-compose up` to assess if your tests pass.
->> I included my app in this file and passed the tests I implemented by docker-compose up.
 
 ## How to submit your exercise
 
