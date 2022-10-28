@@ -8,7 +8,6 @@ I started Go for the first time. It was interesting because it was a little diff
 For more details, I have used the latest version of Golang (1.19) and tried to make it general for other projects. The sources in the pkg/client are general library, and the Form3 client in the examples is the result of using them. When I made this project, as I am starting Go for the first time, I decided to try generic programming supported from 1.18. I tried to make the request and response data generic. In addition, I included my app in `docker-compose.yml` and passed the tests I implemented by docker-compose up.
 
 # Summary
-Here is a summary of some of the home exercise.
 
 <details><summary>Directory Structure</summary>
 
