@@ -1,5 +1,6 @@
-# Junyoung CHoi
+# Junyoung Choi
 
+## I am New to GO :smile:
 The project started on October 18, 2022.
 
 I started Go for the first time. It was interesting because it was a little different from other languages that I used before. 
