@@ -78,12 +78,15 @@ func TestRetry_RetryRequest(t *testing.T) {
 		data   interface{}
 	}
 	tests := []struct {
-		name   string
-		fields fields
-		argsFn func(string, string, io.Reader) *http.Request //method, url, io.Reader
-		args   *args
-		want   *TestServerResponse
-		want1  int //statusc ode
+		name            string
+		fields          fields
+		argsFn          func(string, string, io.Reader) *http.Request //method, url, io.Reader
+		args            *args
+		serverTimeoutMs int
+		clientTimeoutMs int
+		want            *TestServerResponse
+		wantStatusCode  int //statusc ode
+		wantError       bool
 	}{
 		// TODO: Add test cases.
 		{
@@ -110,7 +113,7 @@ func TestRetry_RetryRequest(t *testing.T) {
 				},
 				ErrorMessage: nil,
 			},
-			want1: 200,
+			wantStatusCode: 200,
 		},
 
 		{
@@ -127,8 +130,47 @@ func TestRetry_RetryRequest(t *testing.T) {
 
 				return req
 			},
-			want:  nil,
-			want1: 200,
+			want:           nil,
+			wantStatusCode: 200,
+		},
+		{
+			fields: fields{
+				RetryInterval: 100,
+				RetryMax:      3,
+			},
+			args: &args{
+				method: "",
+				data:   nil,
+			},
+			argsFn: func(method, url string, r io.Reader) *http.Request {
+				req, _ := http.NewRequest(method, url, r)
+
+				return req
+			},
+			want:            nil,
+			wantStatusCode:  200,
+			serverTimeoutMs: 500,
+			clientTimeoutMs: 200,
+		},
+		{
+			fields: fields{
+				RetryInterval: 100,
+				RetryMax:      3,
+			},
+			args: &args{
+				method: "",
+				data:   nil,
+			},
+			argsFn: func(method, url string, r io.Reader) *http.Request {
+				req, _ := http.NewRequest(method, url, r)
+
+				return req
+			},
+			want:            nil,
+			wantStatusCode:  200,
+			serverTimeoutMs: 500,
+			clientTimeoutMs: 200,
+			wantError:       true,
 		},
 	}
 	for _, tt := range tests {
@@ -136,6 +178,9 @@ func TestRetry_RetryRequest(t *testing.T) {
 			retried := 0
 			s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				retried += 1
+				if 0 < tt.serverTimeoutMs && retried < tt.fields.RetryMax || tt.wantError {
+					time.Sleep(time.Duration(tt.serverTimeoutMs) * time.Millisecond)
+				}
 				var result *TestServerResponse
 				if retried < tt.fields.RetryMax {
 					w.WriteHeader(500)
@@ -146,7 +191,7 @@ func TestRetry_RetryRequest(t *testing.T) {
 
 					return
 				}
-				w.WriteHeader(tt.want1)
+				w.WriteHeader(tt.wantStatusCode)
 				result = tt.want
 				dataBytes, _ := json.Marshal(result)
 
@@ -155,14 +200,24 @@ func TestRetry_RetryRequest(t *testing.T) {
 
 			defer s.Close()
 
-			c := &http.Client{}
+			c := &http.Client{
+				Timeout: time.Duration(tt.clientTimeoutMs) * time.Millisecond,
+			}
 			r := &Retry{
 				RetryInterval: tt.fields.RetryInterval,
 				RetryMax:      tt.fields.RetryMax,
 			}
 			reader, _ := json.Marshal(tt.args.data)
 			request := tt.argsFn(tt.args.method, s.URL, bytes.NewReader(reader))
-			got := r.RetryRequest(c, request)
+			got := r.RetryRequest(c, request, reader)
+			if (got.Error != nil) != tt.wantError {
+				t.Errorf("%v", got.Error)
+				return
+			}
+
+			if tt.wantError {
+				return
+			}
 
 			var responseData TestServerResponse
 			bodybytes, err := io.ReadAll(got.Response.Body)
@@ -177,12 +232,15 @@ func TestRetry_RetryRequest(t *testing.T) {
 				t.Errorf("%v", err)
 			}
 
-			if got.Response.StatusCode != tt.want1 {
-				t.Errorf("Retry.RetryRequest() = %v, want1 %v", got.Response.StatusCode, tt.want1)
+			if got.Response.StatusCode != tt.wantStatusCode {
+				t.Errorf("Retry.RetryRequest() = %v, want1 %v", got.Response.StatusCode, tt.wantStatusCode)
 			}
 
 			var wantData TestServerResponse
-			wantBytes, _ := json.Marshal(tt.want)
+			wantBytes, err := json.Marshal(tt.want)
+			if err != nil {
+				t.Errorf("%v", err)
+			}
 			err = json.Unmarshal(wantBytes, &wantData)
 			if err != nil {
 				t.Errorf("%v", err)
