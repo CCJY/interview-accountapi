@@ -53,6 +53,27 @@ func (a *AccountClientFeature) iCallTheMethodGetAccountWithContextWithParams(arg
 	return nil
 }
 
+func (a *AccountClientFeature) iCallTheMethodGetAllAccount() error {
+	Client := a.getAccountClientTest(a.baseUrl, a.timeoutMs)
+
+	got, err := Client.GetAllAccount()
+
+	if err != nil {
+		a.errMessage = err.Error()
+		return nil
+	}
+
+	rsp, err := json.Marshal(got.ContextData)
+	if err != nil {
+		return err
+	}
+
+	a.statusCode = got.StatusCode()
+	a.rsp = rsp
+
+	return nil
+}
+
 func InitializeScenarioGetAccount(ctx *godog.ScenarioContext) {
 	api := &AccountClientFeature{
 		generatedInput: &GeneratedInput{
@@ -64,6 +85,7 @@ func InitializeScenarioGetAccount(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I call the method CreateAccount with params$`, api.iCallTheMethodCreateAccountWithParams)
 	ctx.Step(`^I call the method GetAccount with params "([^"]*)"$`, api.iCallTheMethodGetAccountWithParams)
 	ctx.Step(`^I call the method GetAccountWithContext with params "([^"]*)"$`, api.iCallTheMethodGetAccountWithContextWithParams)
+	ctx.Step(`^I call the method GetAllAccount$`, api.iCallTheMethodGetAllAccount)
 	ctx.Step(`^I call the method DeleteAccount with params "([^"]*)" "(\d+)"$`, api.iCallTheMethodDeleteAccountWithParams)
 	ctx.Step(`^the response code should be (\d+)$`, api.theResponseCodeShouldBe)
 	ctx.Step(`^the response should match json:$`, api.theResponseShouldMatchJson)
