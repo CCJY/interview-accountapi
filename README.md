@@ -10,9 +10,6 @@ In terms of microservices environments, data may or may not be sent or received 
 Regarding the client library, I tried to make it general. As I am starting Go for the first time, I decided to try generic programming supported from 1.18. I tried to make the request and response data generic.
 
 ## Form3 Take Home Exercise
-
-![test_report](./test_report.html)
-
 <details><summary>Directory Structure</summary>
 
 <p>
@@ -149,6 +146,8 @@ The client used fake account API, which is provided as a Docker container in the
 </p>
 </details>
 
+### Result
+![TEST](./test_report_img.png)
 <br>
 
 # Form3 Take Home Exercise
