@@ -59,7 +59,7 @@ fmt.Println(got.ContextData.Data.Id)
 
 - This can be used if a retry is required. Additionally, you can set a retry when you create the Client.
 ```go
-got, err = Client.NewCreateAccountRequest(&reqData).WithRetry(client.Retry{
+got, err = client.NewCreateAccountRequest(&reqData).WithRetry(client.Retry{
             RetryInterval: r.retryWaitMs,
             RetryMax:      r.retryAttempts,
         }).Do()
@@ -84,7 +84,7 @@ got, err = client.NewCreateAccountRequest(&account).
 
 - This is used when you want to get accounts filtered.
 ```go
-got, err = Client.GetAllAccount(
+got, err = client.GetAllAccount(
     types.WithPage(0, 1),
     types.WithFilter("country", "GB"))
 ```
