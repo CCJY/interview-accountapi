@@ -17,10 +17,14 @@ var (
 // If want other encoding and decoding, use CustomEncoding.
 //
 // The RequestContext[T] includes a http.Client standard library, so
-// this RequestContext[T] has a Do funcation. To create a this, use
-// NewRequestContext that is in this package. It reutrns interface to use it and
-// has Do and hooks which are WhenBeforeDo and WhenAfterDo, as well as options
-// retry and context.
+// this RequestContext[T] has a Do function. It requires http.Client.
+//
+// To create this, use NewRequestContext that is in this package.
+// It returns  interface to use it and has Do and hooks which are WhenBeforeDo
+// and WhenAfterDo, as well as options retry and context.
+// When using HookWhenBeforeDo, it can modify a http.Request.
+// When using HookWhenAfterDo, it can manipulate for a response data typed before
+// RequestContext[T].Do.
 type RequestContext[T any] struct {
 	HttpClient  *http.Client
 	HttpRequest *http.Request
