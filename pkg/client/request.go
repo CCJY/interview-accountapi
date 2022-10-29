@@ -42,7 +42,7 @@ type RequestContext[T any] struct {
 
 	Retry Retry
 
-	OriginalBody []byte
+	originalBody []byte
 }
 
 func (r *RequestContext[T]) buildBody() (io.Reader, error) {
@@ -109,7 +109,7 @@ func (r *RequestContext[T]) Do() (*ResponseContext[T], error) {
 		}
 	}
 
-	rsp, err := r.Retry.Do(r.HttpClient, r.HttpRequest, r.OriginalBody)
+	rsp, err := r.Retry.Do(r.HttpClient, r.HttpRequest, r.originalBody)
 	// rsp, err := r.HttpClient.Do(req.HttpRequest)
 	if err != nil {
 		return nil, err
