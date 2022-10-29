@@ -59,10 +59,11 @@ fmt.Println(got.ContextData.Data.Id)
 
 - This can be used if a retry is required. Additionally, you can set a retry when you create the Client.
 ```go
-got, err = client.NewCreateAccountRequest(&reqData).WithRetry(client.Retry{
+got, err = client.NewCreateAccountRequest(&reqData).
+            WithRetry(client.Retry{
             RetryInterval: r.retryWaitMs,
             RetryMax:      r.retryAttempts,
-        }).Do()
+            }).Do()
 ```
 
 - This is used when using context.
@@ -73,20 +74,20 @@ got, err = client.CreateAccountWithContext(ctx, &account)
 - This is used when you want to manipulate data.
 ```go
 got, err = client.NewCreateAccountRequest(&account).
-    	WhenBeforeDo(func(rc *types.CreateAccountRequestContext) error {
+    	    WhenBeforeDo(func(rc *types.CreateAccountRequestContext) error {
             ... // validate
 			return nil
-		}).WhenAfterDo(func(rc *types.CreateAccountResponseContext) error {
+		    }).WhenAfterDo(func(rc *types.CreateAccountResponseContext) error {
             ...
-		return nil
-	}).Do()
+		    return nil
+	        }).Do()
 ```
 
 - This is used when you want to get accounts filtered.
 ```go
 got, err = client.GetAllAccount(
-    types.WithPage(0, 1),
-    types.WithFilter("country", "GB"))
+            types.WithPage(0, 1),
+            types.WithFilter("country", "GB"))
 ```
 
 </p>
