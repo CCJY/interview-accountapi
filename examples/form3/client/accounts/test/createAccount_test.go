@@ -8,7 +8,10 @@ import (
 	"time"
 
 	"github.com/ccjy/interview-accountapi/examples/form3/client/accounts/types"
+	"github.com/ccjy/interview-accountapi/examples/form3/models/account"
 	"github.com/cucumber/godog"
+	"github.com/google/uuid"
+	"github.com/samber/lo"
 )
 
 func (a *AccountClientFeature) iCallTheMethodCreateAccountWithParams(arg1 *godog.DocString) (err error) {
@@ -81,6 +84,47 @@ func (a *AccountClientFeature) iCallTheMethodCreateAccountWithContextWithParams(
 	a.rsp = rsp
 
 	return nil
+}
+
+func (a *AccountClientFeature) iCallTheMethodRandomCreateAccount(arg1 int) error {
+	Client := a.getAccountClientTest(a.baseUrl, a.timeoutMs)
+
+	for i := 0; i < arg1; i++ {
+		attributes := account.AccountAttributes{
+			BankId:     "400300",
+			BankIdCode: "GBDSC",
+			Bic:        "NWBKGB22",
+			Country:    "GB",
+			Name: &[]string{
+				"it", "is", "example",
+			},
+		}
+
+		accountData := &account.AccountData{
+			Attributes:     &attributes,
+			Id:             uuid.New().String(),
+			OrganisationId: uuid.New().String(),
+			Version:        lo.ToPtr(int64(0)),
+			Type:           lo.ToPtr("accounts"),
+		}
+
+		got, err := Client.CreateAccount(&types.CreateAccountRequest{
+			Data: accountData,
+		})
+
+		if err != nil {
+			a.errMessage = err.Error()
+			return nil
+		}
+
+		_, err = json.Marshal(got.ContextData)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+
 }
 
 func InitializeScenarioCreateAccount(ctx *godog.ScenarioContext) {

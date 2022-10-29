@@ -24,7 +24,6 @@ Feature: Get All Account for Form3 API
             """
         Then the response code should be 201
 
-
     Scenario: should get all account
         When I call the method GetAllAccount
         Then the response code should be 200

@@ -10,20 +10,28 @@ import (
 )
 
 type AccountClientInterface interface {
+	// Create a new bank account or register an existing bank account with Form3.
+	// Since FPS requires accounts to be in the UK, the value of the country attribute must be GB.
 	NewCreateAccountRequest(createAccountRequest *types.CreateAccountRequest) client.RequestInterface[types.CreateAccountResponse]
-	NewGetAccountRequest(accountId string) client.RequestInterface[types.GetAccountResponse]
-	NewGetAllAccountRequest() client.RequestInterface[types.GetAllAccountResponse]
-	NewDeleteAccountRequest(accountId string, version string) client.RequestInterface[types.DeleteAccountResponse]
-
 	CreateAccount(createAccountRequest *types.CreateAccountRequest) (*types.CreateAccountResponseContext, error)
-	GetAccount(accountId string) (*types.GetAccountResponseContext, error)
-	GetAllAccount() (*types.GetAllAccountResponseContext, error)
-	DeleteAccount(accountId string, version string) (*types.DeleteAccountResponseContext, error)
-
 	CreateAccountWithContext(ctx context.Context, createAccountRequest *types.CreateAccountRequest) (*types.CreateAccountResponseContext, error)
-	GetAccountWithContext(ctx context.Context, accountId string) (*types.GetAccountResponseContext, error)
-	GetAllAccountWithContext(ctx context.Context) (*types.GetAllAccountResponseContext, error)
+
+	// Delete an Account resource using the resource ID and the current version number.
+	NewDeleteAccountRequest(accountId string, version string) client.RequestInterface[types.DeleteAccountResponse]
+	DeleteAccount(accountId string, version string) (*types.DeleteAccountResponseContext, error)
 	DeleteAccountWithContext(ctx context.Context, accountId string, version string) (*types.DeleteAccountResponseContext, error)
+
+	// Fetch a single Account resource using the resource ID.
+	NewGetAccountRequest(accountId string) client.RequestInterface[types.GetAccountResponse]
+	GetAccount(accountId string) (*types.GetAccountResponseContext, error)
+	GetAccountWithContext(ctx context.Context, accountId string) (*types.GetAccountResponseContext, error)
+
+	// List accounts with the ability to filter and paginate.
+	// All accounts that match all filter criteria will be returned (combinations of filters act as AND expressions).
+	// Multiple values can be set for filters in CSV format, e.g. filter[country]=GB,FR,DE.
+	NewGetAllAccountRequest(opts ...types.GetAllAccountOpt) client.RequestInterface[types.GetAllAccountResponse]
+	GetAllAccount(opts ...types.GetAllAccountOpt) (*types.GetAllAccountResponseContext, error)
+	GetAllAccountWithContext(ctx context.Context, opts ...types.GetAllAccountOpt) (*types.GetAllAccountResponseContext, error)
 }
 
 type AccountClient struct {
@@ -50,33 +58,27 @@ func (a *AccountClient) NewCreateAccountRequest(createAccountRequest *types.Crea
 	)
 }
 
-func (a *AccountClient) NewGetAccountRequest(accountId string) client.RequestInterface[types.GetAccountResponse] {
-	return client.NewRequest(
-		a.Client,
-		&types.GetAccountRequestContext{
-			Method: http.MethodGet,
-			UrlBuilder: &client.Url{
-				BaseUrl:       a.Client.Config.BaseUrl,
-				OperationPath: OperationPathGetAccount,
-				PathParams: map[string]string{
-					"account_id": accountId,
-				},
-			},
-		},
-	)
+func (a *AccountClient) CreateAccount(createAccountRequest *types.CreateAccountRequest) (*types.CreateAccountResponseContext, error) {
+	return a.NewCreateAccountRequest(createAccountRequest).
+		WhenBeforeDo(func(rc *types.CreateAccountRequestContext) error {
+			return nil
+		}).WhenAfterDo(func(rc *types.CreateAccountResponseContext) error {
+		// switch rc.StatusCode() {
+		// case http.StatusCreated:
+		// 	fmt.Printf("Created")
+		// case http.StatusConflict:
+		// case http.StatusBadRequest:
+		// default:
+		// 	fmt.Printf("unexpected error: %d", rc.StatusCode())
+		// }
+		return nil
+	}).Do()
 }
 
-func (a *AccountClient) NewGetAllAccountRequest() client.RequestInterface[types.GetAllAccountResponse] {
-	return client.NewRequest(
-		a.Client,
-		&types.GetAllAccountRequestContext{
-			Method: http.MethodGet,
-			UrlBuilder: &client.Url{
-				BaseUrl:       a.Client.Config.BaseUrl,
-				OperationPath: OperationPathAllAccount,
-			},
-		},
-	)
+func (a *AccountClient) CreateAccountWithContext(ctx context.Context, createAccountRequest *types.CreateAccountRequest) (*types.CreateAccountResponseContext, error) {
+	return a.NewCreateAccountRequest(createAccountRequest).
+		WithContext(ctx).
+		Do()
 }
 
 func (a *AccountClient) NewDeleteAccountRequest(accountId string, version string) client.RequestInterface[types.DeleteAccountResponse] {
@@ -98,45 +100,33 @@ func (a *AccountClient) NewDeleteAccountRequest(accountId string, version string
 	)
 }
 
-func (a *AccountClient) CreateAccount(createAccountRequest *types.CreateAccountRequest) (*types.CreateAccountResponseContext, error) {
-	return a.NewCreateAccountRequest(createAccountRequest).
-		WhenBeforeDo(func(rc *types.CreateAccountRequestContext) error {
-			return nil
-		}).WhenAfterDo(func(rc *types.CreateAccountResponseContext) error {
-		// switch rc.StatusCode() {
-		// case http.StatusCreated:
-		// 	fmt.Printf("Created")
-		// case http.StatusConflict:
-		// case http.StatusBadRequest:
-		// default:
-		// 	fmt.Printf("unexpected error: %d", rc.StatusCode())
-		// }
-		return nil
-	}).Do()
+func (a *AccountClient) DeleteAccount(accountId string, version string) (*types.DeleteAccountResponseContext, error) {
+	return a.NewDeleteAccountRequest(accountId, version).Do()
+}
+func (a *AccountClient) DeleteAccountWithContext(ctx context.Context, accountId string, version string) (*types.DeleteAccountResponseContext, error) {
+	return a.NewDeleteAccountRequest(accountId, version).
+		WithContext(ctx).
+		Do()
+}
+
+func (a *AccountClient) NewGetAccountRequest(accountId string) client.RequestInterface[types.GetAccountResponse] {
+	return client.NewRequest(
+		a.Client,
+		&types.GetAccountRequestContext{
+			Method: http.MethodGet,
+			UrlBuilder: &client.Url{
+				BaseUrl:       a.Client.Config.BaseUrl,
+				OperationPath: OperationPathGetAccount,
+				PathParams: map[string]string{
+					"account_id": accountId,
+				},
+			},
+		},
+	)
 }
 
 func (a *AccountClient) GetAccount(accountId string) (*types.GetAccountResponseContext, error) {
 	return a.NewGetAccountRequest(accountId).Do()
-}
-
-func (a *AccountClient) GetAllAccount() (*types.GetAllAccountResponseContext, error) {
-	return a.NewGetAllAccountRequest().Do()
-}
-
-func (a *AccountClient) DeleteAccount(accountId string, version string) (*types.DeleteAccountResponseContext, error) {
-	return a.NewDeleteAccountRequest(accountId, version).Do()
-}
-
-func (a *AccountClient) CreateAccountWithContext(ctx context.Context, createAccountRequest *types.CreateAccountRequest) (*types.CreateAccountResponseContext, error) {
-	return a.NewCreateAccountRequest(createAccountRequest).
-		WithContext(ctx).
-		Do()
-}
-
-func (a *AccountClient) GetAllAccountWithContext(ctx context.Context) (*types.GetAllAccountResponseContext, error) {
-	return a.NewGetAllAccountRequest().
-		WithContext(ctx).
-		Do()
 }
 
 func (a *AccountClient) GetAccountWithContext(ctx context.Context, accountId string) (*types.GetAccountResponseContext, error) {
@@ -145,8 +135,31 @@ func (a *AccountClient) GetAccountWithContext(ctx context.Context, accountId str
 		Do()
 }
 
-func (a *AccountClient) DeleteAccountWithContext(ctx context.Context, accountId string, version string) (*types.DeleteAccountResponseContext, error) {
-	return a.NewDeleteAccountRequest(accountId, version).
+func (a *AccountClient) NewGetAllAccountRequest(opts ...types.GetAllAccountOpt) client.RequestInterface[types.GetAllAccountResponse] {
+	queryValues := url.Values{}
+
+	for _, opt := range opts {
+		opt(&queryValues)
+	}
+
+	return client.NewRequest(
+		a.Client,
+		&types.GetAllAccountRequestContext{
+			Method: http.MethodGet,
+			UrlBuilder: &client.Url{
+				BaseUrl:       a.Client.Config.BaseUrl,
+				OperationPath: OperationPathAllAccount,
+				QueryParams:   queryValues,
+			},
+		},
+	)
+}
+
+func (a *AccountClient) GetAllAccount(opts ...types.GetAllAccountOpt) (*types.GetAllAccountResponseContext, error) {
+	return a.NewGetAllAccountRequest(opts...).Do()
+}
+func (a *AccountClient) GetAllAccountWithContext(ctx context.Context, opts ...types.GetAllAccountOpt) (*types.GetAllAccountResponseContext, error) {
+	return a.NewGetAllAccountRequest(opts...).
 		WithContext(ctx).
 		Do()
 }
