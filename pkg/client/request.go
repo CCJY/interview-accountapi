@@ -12,6 +12,15 @@ var (
 	DefaultContentType string = "application/json"
 )
 
+// A RequestContext is for a HTTP request. It returns response data typed.
+// Its support to json format for a request and a response by default settings.
+// If want other encoding and decoding, use CustomEncoding.
+//
+// The RequestContext[T] includes a http.Client standard library, so
+// this RequestContext[T] has a Do funcation. To create a this, use
+// NewRequestContext that is in this package. It reutrns interface to use it and
+// has Do and hooks which are WhenBeforeDo and WhenAfterDo, as well as options
+// retry and context.
 type RequestContext[T any] struct {
 	HttpClient  *http.Client
 	HttpRequest *http.Request
