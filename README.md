@@ -82,6 +82,13 @@ got, err = client.NewCreateAccountRequest(&account).
 	}).Do()
 ```
 
+- This is used when you want to get accounts filtered.
+```go
+got, err = Client.GetAllAccount(
+    types.WithPage(0, 1),
+    types.WithFilter("country", "GB"))
+```
+
 </p>
 </details>
 
