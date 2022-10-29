@@ -76,11 +76,11 @@ got, err = client.CreateAccountWithContext(ctx, &account)
 got, err = client.NewCreateAccountRequest(&account).
     	    WhenBeforeDo(func(rc *types.CreateAccountRequestContext) error {
             ... // validate
-			return nil
-		    }).WhenAfterDo(func(rc *types.CreateAccountResponseContext) error {
+		return nil
+	    }).WhenAfterDo(func(rc *types.CreateAccountResponseContext) error {
             ...
-		    return nil
-	        }).Do()
+		return nil
+	    }).Do()
 ```
 
 - This is used when you want to get accounts filtered.
