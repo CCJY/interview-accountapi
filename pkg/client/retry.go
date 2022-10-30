@@ -12,7 +12,7 @@ import (
 type Retry struct {
 	RetryInterval int
 	RetryMax      int
-	Retried       int
+	retried       int
 }
 
 type RetryResult struct {
@@ -20,9 +20,9 @@ type RetryResult struct {
 	Error    error
 }
 
+// The first request depends on the timeout or context.
+// If the timeout or context is not set, wait indefinitely.
 func (r *Retry) Do(client *http.Client, request *http.Request, originalBody []byte) (*http.Response, error) {
-	// The first request depends on the timeout or context.
-	// If the timeout or context is not set, wait indefinitely.
 	got, err := client.Do(request)
 
 	result := &RetryResult{
@@ -34,7 +34,7 @@ func (r *Retry) Do(client *http.Client, request *http.Request, originalBody []by
 		return result.Response, result.Error
 	}
 
-	return r.Retry(client, request, originalBody)
+	return r.retry(client, request, originalBody)
 }
 
 func (r *Retry) ShouldRetry(result *RetryResult) bool {
@@ -61,7 +61,7 @@ func (r *Retry) ShouldRetry(result *RetryResult) bool {
 	return isError
 }
 
-func (r *Retry) Retry(client *http.Client, request *http.Request, originalBody []byte) (*http.Response, error) {
+func (r *Retry) retry(client *http.Client, request *http.Request, originalBody []byte) (*http.Response, error) {
 	result := &RetryResult{
 		Response: nil,
 		Error:    fmt.Errorf("failed all the requests"),
@@ -76,6 +76,7 @@ func (r *Retry) Retry(client *http.Client, request *http.Request, originalBody [
 		}
 	}
 
+	r.retried += 1
 	// The first request depends on the timeout or context.
 	// If the timeout or context is not set, wait indefinitely.
 	// ch <- doFn(client, request)
@@ -92,14 +93,12 @@ func (r *Retry) Retry(client *http.Client, request *http.Request, originalBody [
 	}(client, request)
 
 	// https://github.com/golang/go/issues/19653
-
-	for retried := 1; retried <= r.RetryMax; retried++ {
+	for ; r.retried <= r.RetryMax; r.retried++ {
 		select {
 		case result = <-ch:
 			if !r.ShouldRetry(result) {
 				return result.Response, result.Error
 			}
-
 			// Close the previous response's body. But
 			// read at least some of the body so if it's
 			// small the underlying TCP connection will be
@@ -124,11 +123,21 @@ func (r *Retry) Retry(client *http.Client, request *http.Request, originalBody [
 			// request.GetBody = func() (io.ReadCloser, error) {
 			// 	return io.NopCloser(bytes.NewBuffer(originalBody)), nil
 			// }
-
-			ch <- doFn(client, request)
+			// The last result is not returned,
+			// so the result is assigned first and then passed to the channel.
+			result = doFn(client, request)
+			ch <- result
 		case <-time.After(time.Duration(r.RetryInterval) * time.Millisecond):
 		}
 	}
 
 	return result.Response, result.Error
+}
+
+func (r *Retry) GetRetry() int {
+	if 1 < r.retried {
+		return r.retried - 1
+	}
+
+	return r.retried
 }

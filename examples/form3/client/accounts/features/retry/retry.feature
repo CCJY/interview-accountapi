@@ -2,9 +2,8 @@ Feature: Client Retry Tests
     1. before retry a request, it should get error about "deadline exceed"
     2. after failing twice, it succeeds at the end
 
-
-    # unknown hosts or server status 5xx
-    # Retry is ignored when context is applied.
+    unknown hosts or server status 5xx
+    Retry is ignored when context is applied.
     Scenario: before retry a request, it should get error about "deadline exceed"
         Given Context of client has time limt for 100 ms
         Given MockServer has 150 ms of latency and 50 ms at the end

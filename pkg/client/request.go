@@ -112,6 +112,8 @@ func (r *RequestContext[T]) buildBody() (io.Reader, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		r.originalBody = buf
 		return bytes.NewReader(buf), nil
 	}
 
@@ -124,6 +126,7 @@ func (r *RequestContext[T]) buildBody() (io.Reader, error) {
 		return nil, err
 	}
 
+	r.originalBody = buf
 	return bytes.NewReader(buf), nil
 }
 
@@ -133,6 +136,7 @@ func (r *RequestContext[T]) newRequest() (*RequestContext[T], error) {
 		return nil, err
 	}
 
+	// If has Body, it returns io.Reader
 	reader, err := r.buildBody()
 	if err != nil {
 		return nil, err
