@@ -207,38 +207,60 @@ func (r *RequestContext[T]) Do() (*ResponseContext[T], error) {
 	return &rspContext, nil
 }
 
-func (r *RequestContext[T]) WhenAfterDo(hook func(*ResponseContext[T]) error) *RequestContext[T] {
+func (r *RequestContext[T]) WhenAfterDo(hook func(*ResponseContext[T]) error) RequestInterface[T] {
 	r.HookWhenAfterDo = hook
 
 	return r
 }
 
-func (r *RequestContext[T]) WhenBeforeDo(hook func(*RequestContext[T]) error) *RequestContext[T] {
+func (r *RequestContext[T]) WhenBeforeDo(hook func(*RequestContext[T]) error) RequestInterface[T] {
 	r.HookWhenBeforeDo = hook
 
 	return r
 }
 
-func (r *RequestContext[T]) WithContext(ctx context.Context) *RequestContext[T] {
+func (r *RequestContext[T]) WithContext(ctx context.Context) RequestInterface[T] {
 	r.Context = ctx
 
 	return r
 }
 
-func (r *RequestContext[T]) WithRetry(retry Retry) *RequestContext[T] {
+func (r *RequestContext[T]) WithRetry(retry Retry) RequestInterface[T] {
 	r.Retry = retry
 
 	return r
 }
 
 type RequestInterface[T any] interface {
-	WithContext(context.Context) *RequestContext[T]
-	WithRetry(retry Retry) *RequestContext[T]
-	WhenBeforeDo(func(*RequestContext[T]) error) *RequestContext[T]
+	// If uses this WithContext, HttpRequest of RequestContext[T] will be applied
+	// and replaced to NewHttpRequest when call Do function.
+	WithContext(context.Context) RequestInterface[T]
+
+	// When uses this WithRetry, the first request depends
+	// on the client's timeout or context.
+	// When failed at the first time, it will retry the request as much as
+	// the RetryMax value of Retry when call Do function.
+	WithRetry(retry Retry) RequestInterface[T]
+
+	// When using WhenBeforeDo, it can modify a http.Request.
+	WhenBeforeDo(func(*RequestContext[T]) error) RequestInterface[T]
+
+	// When call this Do funcation, returns ResponseContext[T] and error. In addition,
+	// ContextData of ResponseContext[T] is actual data that you expect data.
 	Do() (*ResponseContext[T], error)
-	WhenAfterDo(func(*ResponseContext[T]) error) *RequestContext[T]
+
+	// When using WhenAfterDo, it can manipulate for a response data typed before
+	// RequestInterface.Do returns ResponseContext[T]
+	WhenAfterDo(func(*ResponseContext[T]) error) RequestInterface[T]
 }
 
+// It returns interface to use it and has Do and hooks which are WhenBeforeDo
+// and WhenAfterDo, as well as options retry and context.
+// When using HookWhenBeforeDo, it can modify a http.Request.
+// When using HookWhenAfterDo, it can manipulate for a response data typed before
+// Do function
+//
+// To send an HTTP request and return an HTTP response, call Do function.
 func NewRequest[T any](httpClient *Client, r *RequestContext[T]) RequestInterface[T] {
 	if httpClient == nil || r == nil {
 		return nil
