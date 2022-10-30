@@ -39,7 +39,7 @@ func (a *AccountClient) NewDeleteAccountRequest(accountId string, version string
 		a.Client,
 		client.NewRequestContextModel(
 			client.WithHttpMethod(http.MethodDelete),
-			client.WithUrl(a.Client.Config.BaseUrl, OperationPathDeleteAccount),
+			client.WithUrl(a.Client.BaseUrl, OperationPathDeleteAccount),
 			client.WithPathParams(client.WithPathParam("account_id", accountId)),
 			client.WithQueryParams(client.WithQueryParam("version", version)),
 		),

@@ -51,9 +51,10 @@ func main() {
 		client.WithNewTransport(t),
 	)
 
-	client := client.NewClient(transport, client.ClientConfig{
-		BaseUrl: "http://127.0.0.1:8080",
-	}, nil)
+	client := client.NewClient(
+		client.WithTransport(transport),
+		client.WithBaseUrl("http://127.0.0.1:8080"),
+	)
 
 	accountClient := accounts.New(client)
 

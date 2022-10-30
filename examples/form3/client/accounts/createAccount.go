@@ -43,7 +43,7 @@ func (a *AccountClient) NewCreateAccountRequest(createAccountRequest *types.Crea
 		client.NewRequestContextModel(
 			client.WithHttpMethod(http.MethodPost),
 			client.WithBody(createAccountRequest),
-			client.WithUrl(a.Client.Config.BaseUrl, OperationPathCreateAccount),
+			client.WithUrl(a.Client.BaseUrl, OperationPathCreateAccount),
 		),
 	)
 }

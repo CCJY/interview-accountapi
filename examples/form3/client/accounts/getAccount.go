@@ -40,7 +40,7 @@ func (a *AccountClient) NewGetAccountRequest(accountId string) client.RequestInt
 		a.Client,
 		client.NewRequestContextModel(
 			client.WithHttpMethod(http.MethodGet),
-			client.WithUrl(a.Client.Config.BaseUrl, OperationPathGetAccount),
+			client.WithUrl(a.Client.BaseUrl, OperationPathGetAccount),
 			client.WithPathParams(client.WithPathParam("account_id", accountId)),
 		),
 	)

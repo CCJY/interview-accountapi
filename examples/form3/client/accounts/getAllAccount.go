@@ -53,7 +53,7 @@ func (a *AccountClient) NewGetAllAccountRequest(opts ...types.GetAllAccountOpt) 
 		a.Client,
 		client.NewRequestContextModel(
 			client.WithHttpMethod(http.MethodGet),
-			client.WithUrl(a.Client.Config.BaseUrl, OperationPathAllAccount),
+			client.WithUrl(a.Client.BaseUrl, OperationPathAllAccount),
 			client.WithQueryValues(&queryValues),
 		),
 	)

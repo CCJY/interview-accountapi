@@ -65,10 +65,10 @@ func (a *AccountClientFeature) getAccountClientTest(baseUrl string, timeout int)
 		baseUrl = getHostNmae()
 	}
 	transport := client.InitTransport()
-	ccjyclient := client.NewClient(transport, client.ClientConfig{
-		BaseUrl: baseUrl,
-		Timeout: timeout,
-	}, nil)
+	ccjyclient := client.NewClient(
+		client.WithTransport(transport),
+		client.WithBaseUrl(baseUrl),
+		client.WithTimeout(timeout))
 
 	return accounts.New(ccjyclient)
 }

@@ -5,25 +5,51 @@ import (
 	"time"
 )
 
-type ClientConfig struct {
-	BaseUrl string
-	Timeout int
-}
-
 type Client struct {
 	HttpClient *http.Client
-	Config     ClientConfig
+	Transport  *Transport
+	BaseUrl    string
+	// Seconds
+	Timeout time.Duration
 	// When set encoding globaly, this should set into all request context
 	Encoding Encoding
 }
 
-func NewClient(t *Transport, config ClientConfig, encoding Encoding) *Client {
-	return &Client{
-		HttpClient: &http.Client{
-			Transport: t.Transport,
-			Timeout:   time.Duration(config.Timeout) * time.Second,
-		},
-		Config:   config,
-		Encoding: encoding,
+type ClientOpt func(*Client)
+
+func NewClient(opts ...ClientOpt) *Client {
+	c := &Client{}
+	for _, opt := range opts {
+		opt(c)
+	}
+	c.HttpClient = &http.Client{
+		Transport: c.Transport.Transport,
+		Timeout:   c.Timeout,
+	}
+
+	return c
+}
+
+func WithBaseUrl(baseUrl string) ClientOpt {
+	return func(c *Client) {
+		c.BaseUrl = baseUrl
+	}
+}
+
+func WithTimeout(timeout int) ClientOpt {
+	return func(c *Client) {
+		c.Timeout = time.Duration(timeout) * time.Second
+	}
+}
+
+func WithTransport(t *Transport) ClientOpt {
+	return func(c *Client) {
+		c.Transport = t
+	}
+}
+
+func WithEncoding(encoding Encoding) ClientOpt {
+	return func(c *Client) {
+		c.Encoding = encoding
 	}
 }

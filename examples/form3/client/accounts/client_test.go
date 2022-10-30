@@ -30,20 +30,21 @@ func getHostNmae() string {
 
 func getAccountClient() AccountClientInterface {
 	transport := client.InitTransport()
-	ccjyclient := client.NewClient(transport, client.ClientConfig{
-		BaseUrl: getHostNmae(),
-		Timeout: 3,
-	}, nil)
+	ccjyclient := client.NewClient(
+		client.WithTransport(transport),
+		client.WithBaseUrl(getHostNmae()),
+		client.WithTimeout(3))
 
 	return New(ccjyclient)
 }
 
 func getAccountClientWithMockAndTimeout(mockurl string, milliseconds int) AccountClientInterface {
 	transport := client.InitTransport()
-	ccjyclient := client.NewClient(transport, client.ClientConfig{
-		BaseUrl: mockurl,
-		Timeout: milliseconds,
-	}, nil)
+	ccjyclient := client.NewClient(
+		client.WithTransport(transport),
+		client.WithBaseUrl(mockurl),
+		client.WithTimeout(milliseconds),
+	)
 
 	return New(ccjyclient)
 }
