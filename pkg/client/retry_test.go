@@ -409,7 +409,7 @@ func TestRetry_RetryRequest_When_ServerHasSleep_But_LastRequestNoSleep(t *testin
 		retried           int
 	}{
 		// Given Server's sleep 500ms per a request, but it does not sleep at the a last request
-		// And Client's timeout 200ms per a request
+		// And Client's timeout 200ms
 		// And data is not nil
 		// Then OK
 		// Then retried is 3
@@ -452,7 +452,7 @@ func TestRetry_RetryRequest_When_ServerHasSleep_But_LastRequestNoSleep(t *testin
 			triggerRetry:      true,
 		},
 		// Given Server's sleep 500ms per a request, but it does not sleep at the a last request
-		// And Client's timeout 200ms per a request
+		// And Client's timeout 200ms
 		// And data is nil
 		// Then OK
 		// Then retried is 3
@@ -486,6 +486,39 @@ func TestRetry_RetryRequest_When_ServerHasSleep_But_LastRequestNoSleep(t *testin
 			serverSleepTimeMs: 500,
 			clientTimeoutMs:   200,
 			retried:           3,
+			triggerRetry:      true,
+		},
+		// Given Server's sleep 500ms per a request, but it does not sleep at the a last request
+		// And Client's timeout not set
+		// And data is nil
+		// Then OK
+		// Then retried is 0
+		{
+			name: "3. should be ok",
+			fields: fields{
+				RetryInterval: 100,
+				RetryMax:      3,
+			},
+			args: &args{
+				method: "GET",
+				data:   nil,
+			},
+			argsFn: func(method, url string, r io.Reader) *http.Request {
+				req, _ := http.NewRequest(method, url, r)
+
+				return req
+			},
+			respDataWhenRetry: &TestServerResponse{
+				Data:         nil,
+				ErrorMessage: nil,
+			},
+			want: &TestServerResponse{
+				Data:         nil,
+				ErrorMessage: nil,
+			},
+			wantStatusCode:    200,
+			serverSleepTimeMs: 500,
+			retried:           0,
 			triggerRetry:      true,
 		},
 	}
