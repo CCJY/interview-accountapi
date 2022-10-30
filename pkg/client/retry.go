@@ -44,11 +44,16 @@ func (r *Retry) ShouldRetry(result *RetryResult) bool {
 		return isError
 	}
 
-	// If client.Do() has an error, response is nil
+	// If http.Client.Do() has an error, response is nil, so
+	// it means that it was not error and received a HTTP response.
+	// However, if HTTP status code is 5xx or 429, it will retry
 	if result.Response != nil {
 		// If the http status code is 5xx, the request will be tried again.
 		if http.StatusInternalServerError <= result.Response.StatusCode &&
 			result.Response.StatusCode <= 599 {
+			isError = true
+		}
+		if http.StatusTooManyRequests == result.Response.StatusCode {
 			isError = true
 		}
 	}
