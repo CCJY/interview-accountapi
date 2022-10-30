@@ -9,5 +9,4 @@ import (
 type CreateAccountRequest = commons.RequestData[models.AccountData]
 type CreateAccountResponse = commons.ResponseData[models.AccountData]
 
-type CreateAccountRequestContext = client.RequestContext[CreateAccountResponse]
 type CreateAccountResponseContext = client.ResponseContext[CreateAccountResponse]

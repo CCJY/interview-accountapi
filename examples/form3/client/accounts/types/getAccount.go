@@ -7,6 +7,4 @@ import (
 )
 
 type GetAccountResponse = commons.ResponseData[models.AccountData]
-
-type GetAccountRequestContext = client.RequestContext[GetAccountResponse]
 type GetAccountResponseContext = client.ResponseContext[GetAccountResponse]

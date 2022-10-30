@@ -44,8 +44,8 @@ type GetAllAccountOpt func(*url.Values)
 func WithPage(number int, size int) GetAllAccountOpt {
 
 	return func(urlValues *url.Values) {
-		urlValues.Add("page[number]", fmt.Sprint(number))
-		urlValues.Add("page[size]", fmt.Sprint(size))
+		urlValues.Set("page[number]", fmt.Sprint(number))
+		urlValues.Set("page[size]", fmt.Sprint(size))
 	}
 }
 
@@ -57,6 +57,4 @@ func WithFilter(key string, value string) GetAllAccountOpt {
 }
 
 type GetAllAccountResponse = commons.ResponseDataArray[models.AccountData]
-
-type GetAllAccountRequestContext = client.RequestContext[GetAllAccountResponse]
 type GetAllAccountResponseContext = client.ResponseContext[GetAllAccountResponse]

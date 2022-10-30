@@ -45,24 +45,21 @@ func New(client *client.Client) AccountClientInterface {
 }
 
 func (a *AccountClient) NewCreateAccountRequest(createAccountRequest *types.CreateAccountRequest) client.RequestInterface[types.CreateAccountResponse] {
-	return client.NewRequest(
+	return client.NewRequestContext[types.CreateAccountResponse](
 		a.Client,
-		&types.CreateAccountRequestContext{
-			Method: http.MethodPost,
-			UrlBuilder: &client.Url{
-				BaseUrl:       a.Client.Config.BaseUrl,
-				OperationPath: OperationPathCreateAccount,
-			},
-			Body: createAccountRequest,
-		},
+		client.NewRequestContextModel(
+			client.WithHttpMethod(http.MethodPost),
+			client.WithBody(createAccountRequest),
+			client.WithUrl(a.Client.Config.BaseUrl, OperationPathCreateAccount),
+		),
 	)
 }
 
 func (a *AccountClient) CreateAccount(createAccountRequest *types.CreateAccountRequest) (*types.CreateAccountResponseContext, error) {
 	return a.NewCreateAccountRequest(createAccountRequest).
-		WhenBeforeDo(func(rc *types.CreateAccountRequestContext) error {
+		WhenBeforeDo(func(rc *client.RequestContext[types.CreateAccountResponse]) error {
 			return nil
-		}).WhenAfterDo(func(rc *types.CreateAccountResponseContext) error {
+		}).WhenAfterDo(func(rc *client.ResponseContext[types.CreateAccountResponse]) error {
 		// switch rc.StatusCode() {
 		// case http.StatusCreated:
 		// 	fmt.Printf("Created")
@@ -82,21 +79,14 @@ func (a *AccountClient) CreateAccountWithContext(ctx context.Context, createAcco
 }
 
 func (a *AccountClient) NewDeleteAccountRequest(accountId string, version string) client.RequestInterface[types.DeleteAccountResponse] {
-	return client.NewRequest(
+	return client.NewRequestContext[types.DeleteAccountResponse](
 		a.Client,
-		&types.DeleteAccountRequestContext{
-			Method: http.MethodDelete,
-			UrlBuilder: &client.Url{
-				BaseUrl:       a.Client.Config.BaseUrl,
-				OperationPath: OperationPathDeleteAccount,
-				PathParams: map[string]string{
-					"account_id": accountId,
-				},
-				QueryParams: url.Values{
-					"version": []string{version},
-				},
-			},
-		},
+		client.NewRequestContextModel(
+			client.WithHttpMethod(http.MethodDelete),
+			client.WithUrl(a.Client.Config.BaseUrl, OperationPathDeleteAccount),
+			client.WithPathParams(client.WithPathParam("account_id", accountId)),
+			client.WithQueryParams(client.WithQueryParam("version", version)),
+		),
 	)
 }
 
@@ -110,18 +100,13 @@ func (a *AccountClient) DeleteAccountWithContext(ctx context.Context, accountId 
 }
 
 func (a *AccountClient) NewGetAccountRequest(accountId string) client.RequestInterface[types.GetAccountResponse] {
-	return client.NewRequest(
+	return client.NewRequestContext[types.GetAccountResponse](
 		a.Client,
-		&types.GetAccountRequestContext{
-			Method: http.MethodGet,
-			UrlBuilder: &client.Url{
-				BaseUrl:       a.Client.Config.BaseUrl,
-				OperationPath: OperationPathGetAccount,
-				PathParams: map[string]string{
-					"account_id": accountId,
-				},
-			},
-		},
+		client.NewRequestContextModel(
+			client.WithHttpMethod(http.MethodGet),
+			client.WithUrl(a.Client.Config.BaseUrl, OperationPathGetAccount),
+			client.WithPathParams(client.WithPathParam("account_id", accountId)),
+		),
 	)
 }
 
@@ -142,16 +127,13 @@ func (a *AccountClient) NewGetAllAccountRequest(opts ...types.GetAllAccountOpt) 
 		opt(&queryValues)
 	}
 
-	return client.NewRequest(
+	return client.NewRequestContext[types.GetAllAccountResponse](
 		a.Client,
-		&types.GetAllAccountRequestContext{
-			Method: http.MethodGet,
-			UrlBuilder: &client.Url{
-				BaseUrl:       a.Client.Config.BaseUrl,
-				OperationPath: OperationPathAllAccount,
-				QueryParams:   queryValues,
-			},
-		},
+		client.NewRequestContextModel(
+			client.WithHttpMethod(http.MethodGet),
+			client.WithUrl(a.Client.Config.BaseUrl, OperationPathAllAccount),
+			client.WithQueryValues(&queryValues),
+		),
 	)
 }
 

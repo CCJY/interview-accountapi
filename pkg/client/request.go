@@ -5,6 +5,7 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"net/url"
 )
 
 var (
@@ -261,7 +262,7 @@ type RequestInterface[T any] interface {
 // Do function
 //
 // To send an HTTP request and return an HTTP response, call Do function.
-func NewRequest[T any](httpClient *Client, r *RequestContext[T]) RequestInterface[T] {
+func newRequest[T any](httpClient *Client, r *RequestContext[T]) RequestInterface[T] {
 	if httpClient == nil || r == nil {
 		return nil
 	}
@@ -271,28 +272,115 @@ func NewRequest[T any](httpClient *Client, r *RequestContext[T]) RequestInterfac
 	return r
 }
 
-// type RequestContextModel struct {
-// 	Context       context.Context
-// 	Method        string
-// 	BaseUrl       string
-// 	OperationPath string
-// 	QueryParams   url.Values
-// 	PathParams    map[string]string
-// 	Header        http.Header
-// 	Body          interface{}
-// }
+func NewRequestContext[T any](client *Client, contextModel *RequestContextModel) RequestInterface[T] {
+	return newRequest(
+		client,
+		&RequestContext[T]{
+			Context: contextModel.Context,
+			Method:  contextModel.Method,
+			UrlBuilder: &Url{
+				BaseUrl:       contextModel.BaseUrl,
+				OperationPath: contextModel.OperationPath,
+				QueryParams:   contextModel.QueryParams,
+				PathParams:    contextModel.PathParams,
+			},
+			Header:         contextModel.Header,
+			Body:           contextModel.Body,
+			CustomEncoding: contextModel.Encoding,
+		},
+	)
+}
 
-// func NewRequestContext[T any](contextModel RequestContextModel) *RequestContext[T] {
-// 	return &RequestContext[T]{
-// 		Context: contextModel.Context,
-// 		Method:  contextModel.Method,
-// 		UrlBuilder: &Url{
-// 			BaseUrl:       contextModel.BaseUrl,
-// 			OperationPath: contextModel.OperationPath,
-// 			QueryParams:   contextModel.QueryParams,
-// 			PathParams:    contextModel.PathParams,
-// 		},
-// 		Header: contextModel.Header,
-// 		Body:   contextModel.Body,
-// 	}
-// }
+type RequestContextModelOpt func(*RequestContextModel)
+
+type RequestContextModel struct {
+	Context       context.Context
+	Method        string
+	BaseUrl       string
+	OperationPath string
+	QueryParams   url.Values
+	PathParams    map[string]string
+	Header        http.Header
+	Body          interface{}
+	Encoding      Encoding
+}
+
+func NewRequestContextModel(opts ...RequestContextModelOpt) *RequestContextModel {
+	model := &RequestContextModel{}
+
+	for _, opt := range opts {
+		opt(model)
+	}
+
+	return model
+}
+
+func WithHttpMethod(method string) RequestContextModelOpt {
+	return func(requestContextModel *RequestContextModel) {
+		requestContextModel.Method = method
+	}
+}
+func WithBody(body interface{}) RequestContextModelOpt {
+	return func(requestContextModel *RequestContextModel) {
+		requestContextModel.Body = body
+	}
+}
+
+func WithUrl(baseUrl string, operationPath string) RequestContextModelOpt {
+	return func(requestContextModel *RequestContextModel) {
+		requestContextModel.BaseUrl = baseUrl
+		requestContextModel.OperationPath = operationPath
+	}
+}
+
+type PathOpt func(map[string]string)
+
+func WithPathParam(key string, value string) PathOpt {
+	return func(m map[string]string) {
+		m[key] = value
+	}
+}
+
+func WithPathParams(opts ...PathOpt) RequestContextModelOpt {
+	params := make(map[string]string)
+
+	for _, opt := range opts {
+		opt(params)
+	}
+
+	return func(requestContextModel *RequestContextModel) {
+		requestContextModel.PathParams = params
+	}
+}
+
+type QueryOpt func(*url.Values)
+
+func WithQueryParam(key string, value string) QueryOpt {
+
+	return func(v *url.Values) {
+		v.Add(key, value)
+	}
+}
+
+func WithQueryParams(opts ...QueryOpt) RequestContextModelOpt {
+	queries := url.Values{}
+	for _, opt := range opts {
+		opt(&queries)
+
+	}
+	return func(rcm *RequestContextModel) {
+		rcm.QueryParams = queries
+	}
+}
+
+func WithQueryValues(urlValues *url.Values) RequestContextModelOpt {
+	return func(rcm *RequestContextModel) {
+		rcm.QueryParams = *urlValues
+	}
+}
+
+func WithRequestContextModel(requestContextModel *RequestContextModel) RequestContextModelOpt {
+	return func(rcm *RequestContextModel) {
+		*rcm = *requestContextModel
+	}
+}

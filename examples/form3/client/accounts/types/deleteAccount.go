@@ -6,8 +6,5 @@ import (
 )
 
 type DeleteAccountResponseData struct{}
-
 type DeleteAccountResponse = commons.ResponseData[DeleteAccountResponseData]
-
-type DeleteAccountRequestContext = client.RequestContext[DeleteAccountResponse]
 type DeleteAccountResponseContext = client.ResponseContext[DeleteAccountResponse]
