@@ -37,7 +37,7 @@ var (
 	instance *Transport
 )
 
-func NewTransport(opts ...TransportOpt) *Transport {
+func InitTransport(opts ...TransportOpt) *Transport {
 	once.Do(func() {
 		transport := &Transport{}
 
@@ -57,7 +57,7 @@ func NewTransport(opts ...TransportOpt) *Transport {
 
 func getTransport() *Transport {
 	if instance == nil {
-		return NewTransport()
+		return InitTransport()
 	}
 	return instance
 }

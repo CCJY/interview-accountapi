@@ -64,7 +64,7 @@ func (a *AccountClientFeature) getAccountClientTest(baseUrl string, timeout int)
 	if baseUrl == "" {
 		baseUrl = getHostNmae()
 	}
-	transport := client.NewTransport()
+	transport := client.InitTransport()
 	ccjyclient := client.NewClient(transport, client.ClientConfig{
 		BaseUrl: baseUrl,
 		Timeout: timeout,

@@ -47,7 +47,7 @@ func main() {
 		KeepAlive: 5 * time.Second,
 	}).DialContext
 
-	transport := client.NewTransport(
+	transport := client.InitTransport(
 		client.WithNewTransport(t),
 	)
 
