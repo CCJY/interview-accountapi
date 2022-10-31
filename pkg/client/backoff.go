@@ -29,12 +29,12 @@ func (p *RetryPolicy) CalcuateSleep(retried int, sleep int) int {
 	switch p.PolicyName {
 	case RetryPolicyExpoBackOff:
 		return p.ExpoBackOff(retried)
+	case RetryPolicyExpoEqualJitter:
+		return p.ExpoEqualJitter(retried)
+	case RetryPolicyExpoFullyJitter:
+		return p.ExpoFullyJitter(retried)
 	case RetryPolicyExpoDecorrJitter:
 		return p.ExpoDecorrJitter(sleep)
-	case RetryPolicyExpoEqualJitter:
-		return p.ExpoEqualJitter(sleep)
-	case RetryPolicyExpoFullyJitter:
-		return p.ExpoFullyJitter(sleep)
 	default:
 		return p.NoBackOff()
 	}
@@ -52,8 +52,7 @@ func (b *RetryPolicy) NoBackOff() int {
 
 func (b *RetryPolicy) ExpoEqualJitter(retried int) int {
 	backOff := b.ExpoBackOff(retried)
-	j := backOff / 2
-	sleep := j + rand.Intn(j)
+	sleep := backOff/2 + rand.Intn(backOff/2)
 	return sleep
 }
 
@@ -64,5 +63,5 @@ func (b *RetryPolicy) ExpoFullyJitter(retried int) int {
 }
 
 func (b *RetryPolicy) ExpoDecorrJitter(sleep int) int {
-	return int(math.Min(float64(b.cap), float64(b.base)+float64(rand.Intn(sleep*3-b.base))))
+	return int(math.Min(float64(b.cap), float64(b.base+rand.Intn(sleep*3-b.base))))
 }
