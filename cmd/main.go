@@ -13,6 +13,8 @@ import (
 	"github.com/ccjy/interview-accountapi/pkg/client"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
+
+	_ "net/http/pprof"
 )
 
 func getDefaultAccountData() *account.AccountData {
@@ -37,7 +39,7 @@ func getDefaultAccountData() *account.AccountData {
 	return accountData
 }
 
-func main() {
+func getTransport() *client.Transport {
 	t := http.DefaultTransport.(*http.Transport).Clone()
 	t.MaxIdleConns = 30
 	t.MaxConnsPerHost = 30
@@ -51,28 +53,87 @@ func main() {
 		client.WithNewTransport(t),
 	)
 
+	return transport
+}
+
+func main() {
+	t := getTransport()
+	serverUrl := "localhost:9090"
 	client := client.NewClient(
-		client.WithTransport(transport),
-		client.WithBaseUrl("http://127.0.0.1:8080"),
+		client.WithTransport(t),
+		client.WithBaseUrl("http://"+serverUrl),
+		client.WithTimeout(100),
 	)
 
-	accountClient := accounts.New(client)
+	handlers := wrapperStruct{client: client}
+	http.HandleFunc("/req", handlers.requestHandler)
+	http.HandleFunc("/wait", handlers.waitHandler)
+	http.ListenAndServe(serverUrl, nil)
+}
 
-	got, err := accountClient.CreateAccount(&types.CreateAccountRequest{
+type wrapperStruct struct {
+	client *client.Client
+}
+
+func (ws wrapperStruct) requestHandler(w http.ResponseWriter, r *http.Request) {
+	reqData := &types.CreateAccountRequest{
 		Data: getDefaultAccountData(),
-	})
+	}
+
+	got, err := client.NewRequestContext[types.CreateAccountResponse](
+		ws.client,
+		client.NewRequestContextModel(
+			client.WithHttpMethod(http.MethodPost),
+			client.WithBody(reqData),
+			client.WithUrl(ws.client.BaseUrl, "/wait"),
+		),
+	).WithRetry(client.Retry{
+		RetryInterval: 100,
+		RetryMax:      3,
+	}).Do()
 
 	if err != nil {
 		fmt.Printf("%v", err)
+		fmt.Fprintln(w, err)
 		return
 	}
 
 	dataBytes, err := json.Marshal(got.ContextData)
 	if err != nil {
 		fmt.Printf("%v", err)
+		fmt.Fprintln(w, dataBytes)
 		return
 	}
 
-	fmt.Printf("ID: %s\n", got.ContextData.Data.Id)
-	fmt.Println("JSON:" + string(dataBytes))
+	fmt.Fprintln(w, string(dataBytes))
+}
+
+func (ws wrapperStruct) waitHandler(w http.ResponseWriter, r *http.Request) {
+	reqData := new(types.CreateAccountRequest)
+	err := json.NewDecoder(r.Body).Decode(reqData)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprint(w, "Bad Request: ", err)
+		return
+	}
+
+	dataBytes, err := json.Marshal(reqData)
+	if err != nil {
+		w.Write(dataBytes)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintln(w, string(dataBytes))
+}
+
+func HealthCheck(accountClient accounts.AccountClientInterface) {
+	got, err := accountClient.HealthCheck()
+
+	if err != nil {
+		fmt.Printf("%v", err)
+		return
+	}
+
+	fmt.Printf("status: %s\n", got.ContextData.Status)
 }
