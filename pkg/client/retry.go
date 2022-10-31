@@ -2,7 +2,6 @@ package client
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,6 +12,7 @@ type Retry struct {
 	RetryInterval int
 	RetryMax      int
 	retried       int
+	RetryPolicy   RetryPolicy
 }
 
 type RetryResult struct {
@@ -66,6 +66,14 @@ func (r *Retry) ShouldRetry(result *RetryResult) bool {
 	return isError
 }
 
+func (r *Retry) GetRetry() int {
+	if 1 < r.retried {
+		return r.retried
+	}
+
+	return r.retried
+}
+
 func (r *Retry) retry(client *http.Client, request *http.Request, originalBody []byte) (*http.Response, error) {
 	result := &RetryResult{
 		Response: nil,
@@ -73,32 +81,19 @@ func (r *Retry) retry(client *http.Client, request *http.Request, originalBody [
 	}
 	ch := make(chan *RetryResult, 1)
 
-	doFn := func(c *http.Client, req *http.Request) *RetryResult {
+	doFn := func(c *http.Client, req *http.Request) {
 		got, err := c.Do(req)
-		return &RetryResult{
+		result = &RetryResult{
 			Response: got,
 			Error:    err,
 		}
+		ch <- result
 	}
 
-	r.retried += 1
-	// The first request depends on the timeout or context.
-	// If the timeout or context is not set, wait indefinitely.
-	// ch <- doFn(client, request)
-	ch <- func(c *http.Client, req *http.Request) *RetryResult {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.RetryInterval)*time.Millisecond)
-		defer cancel()
-		// Only the first retry request applies.
-		newReq := req.WithContext(ctx)
-		got, err := c.Do(newReq)
-		return &RetryResult{
-			Response: got,
-			Error:    err,
-		}
-	}(client, request)
+	go doFn(client, request)
 
 	// https://github.com/golang/go/issues/19653
-	for ; r.retried <= r.RetryMax; r.retried++ {
+	for r.retried = 0; r.retried < r.RetryMax; r.retried++ {
 		select {
 		case result = <-ch:
 			if !r.ShouldRetry(result) {
@@ -128,21 +123,10 @@ func (r *Retry) retry(client *http.Client, request *http.Request, originalBody [
 			// request.GetBody = func() (io.ReadCloser, error) {
 			// 	return io.NopCloser(bytes.NewBuffer(originalBody)), nil
 			// }
-			// The last result is not returned,
-			// so the result is assigned first and then passed to the channel.
-			result = doFn(client, request)
-			ch <- result
+			doFn(client, request)
 		case <-time.After(time.Duration(r.RetryInterval) * time.Millisecond):
 		}
 	}
 
 	return result.Response, result.Error
-}
-
-func (r *Retry) GetRetry() int {
-	if 1 < r.retried {
-		return r.retried - 1
-	}
-
-	return r.retried
 }
