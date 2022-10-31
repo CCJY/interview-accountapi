@@ -9,6 +9,7 @@ type AccountClientInterface interface {
 	DeleteAccountInterface
 	GetAccountInterface
 	GetAllAccountInterface
+	HealthInterface
 }
 
 type AccountClient struct {
