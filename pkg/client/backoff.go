@@ -5,50 +5,64 @@ import (
 	"math/rand"
 )
 
-type BackOff struct {
+// This implementation is based on this reference.
+//
+// See https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
+
+type RetryPolicyName string
+
+const (
+	RetryPolicyNoBackOff        RetryPolicyName = "NoBackOff"
+	RetryPolicyExpoBackOff      RetryPolicyName = "ExpoBackOff"
+	RetryPolicyExpoEqualJitter  RetryPolicyName = "ExpoEqualJitter"
+	RetryPolicyExpoFullyJitter  RetryPolicyName = "ExpoFullyJitter"
+	RetryPolicyExpoDecorrJitter RetryPolicyName = "ExpoDecorrjitter"
+)
+
+type RetryPolicy struct {
+	base       int
+	cap        int
+	PolicyName RetryPolicyName
 }
 
-func (b *BackOff) Backoff(base, cap, retried int) int {
-	v := math.Pow(2, float64(retried)) * float64(base)
-	return int(math.Min(float64(cap), v))
+func (p *RetryPolicy) CalcuateSleep(retried int, sleep int) int {
+	switch p.PolicyName {
+	case RetryPolicyExpoBackOff:
+		return p.ExpoBackOff(retried)
+	case RetryPolicyExpoDecorrJitter:
+		return p.ExpoDecorrJitter(sleep)
+	case RetryPolicyExpoEqualJitter:
+		return p.ExpoEqualJitter(sleep)
+	case RetryPolicyExpoFullyJitter:
+		return p.ExpoFullyJitter(sleep)
+	default:
+		return p.NoBackOff()
+	}
+
 }
 
-func (b *BackOff) EqualJitter(base, cap, retried int) int {
-	backOff := Backoff(base, cap, retried)
+func (p *RetryPolicy) ExpoBackOff(retried int) int {
+	v := math.Pow(2, float64(retried)) * float64(p.base)
+	return int(math.Min(float64(p.cap), v))
+}
+
+func (b *RetryPolicy) NoBackOff() int {
+	return b.base
+}
+
+func (b *RetryPolicy) ExpoEqualJitter(retried int) int {
+	backOff := b.ExpoBackOff(retried)
 	j := backOff / 2
 	sleep := j + rand.Intn(j)
 	return sleep
 }
 
-func (b *BackOff) FullyJitter(base, cap, retried int) int {
-	backOff := Backoff(base, cap, retried)
+func (b *RetryPolicy) ExpoFullyJitter(retried int) int {
+	backOff := b.ExpoBackOff(retried)
 	sleep := rand.Intn(backOff)
 	return sleep
 }
 
-func (b *BackOff) DecorrJitter(base int, cap int, sleep int) int {
-	return int(math.Min(float64(cap), float64(base)+float64(rand.Intn(sleep*3-base))))
-}
-
-// https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
-func Backoff(base, cap, retried int) int {
-	v := math.Pow(2, float64(retried)) * float64(base)
-	return int(math.Min(float64(cap), v))
-}
-
-func EqualJitter(base, cap, retried int) int {
-	backOff := Backoff(base, cap, retried)
-	j := backOff / 2
-	sleep := j + rand.Intn(j)
-	return sleep
-}
-
-func FullyJitter(base, cap, retried int) int {
-	backOff := Backoff(base, cap, retried)
-	sleep := rand.Intn(backOff)
-	return sleep
-}
-
-func DecorrJitter(base int, cap int, sleep int) int {
-	return int(math.Min(float64(cap), float64(base)+float64(rand.Intn(sleep*3-base))))
+func (b *RetryPolicy) ExpoDecorrJitter(sleep int) int {
+	return int(math.Min(float64(b.cap), float64(b.base)+float64(rand.Intn(sleep*3-b.base))))
 }

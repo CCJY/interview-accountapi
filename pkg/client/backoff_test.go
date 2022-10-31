@@ -35,7 +35,10 @@ func TestRetryWithBackoff(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run("", func(t *testing.T) {
-			sleeptime := Backoff(tt.base, tt.maxDuration, tt.retried)
+			backoff := RetryPolicy{
+				PolicyName: RetryPolicyExpoBackOff,
+				base:       tt.base, cap: tt.maxDuration}
+			sleeptime := backoff.CalcuateSleep(tt.retried, 0)
 
 			if sleeptime < tt.base || tt.maxDuration < sleeptime {
 				t.Errorf("wrong: %v", sleeptime)
@@ -64,14 +67,17 @@ func TestRetryWithEqualJitter(t *testing.T) {
 		{
 			base:        100,
 			maxDuration: 300,
-			retried:     1,
+			retried:     2,
 		},
 	}
 	for _, tt := range tests {
 		t.Run("", func(t *testing.T) {
-			sleeptime := EqualJitter(tt.base, tt.maxDuration, tt.retried)
+			backoff := RetryPolicy{
+				PolicyName: RetryPolicyExpoEqualJitter,
+				base:       tt.base, cap: tt.maxDuration}
+			sleeptime := backoff.CalcuateSleep(tt.retried, 0)
 
-			if sleeptime < tt.base || tt.maxDuration < sleeptime {
+			if tt.base < sleeptime {
 				t.Errorf("wrong: %v", sleeptime)
 			}
 			fmt.Println(time.Duration(sleeptime) * time.Millisecond)
@@ -103,7 +109,10 @@ func TestRetryWithFullyJitter(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run("", func(t *testing.T) {
-			sleeptime := FullyJitter(tt.base, tt.maxDuration, tt.retried)
+			backoff := RetryPolicy{
+				PolicyName: RetryPolicyExpoFullyJitter,
+				base:       tt.base, cap: tt.maxDuration}
+			sleeptime := backoff.CalcuateSleep(tt.retried, 0)
 			if tt.base < sleeptime {
 				t.Errorf("wrong: %v", sleeptime)
 			}

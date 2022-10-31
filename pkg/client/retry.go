@@ -11,8 +11,8 @@ import (
 type Retry struct {
 	RetryInterval int
 	RetryMax      int
-	retried       int
-	RetryPolicy   RetryPolicy
+
+	retried int
 }
 
 type RetryResult struct {
