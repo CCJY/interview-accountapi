@@ -224,7 +224,7 @@ func TestRetry_RetryRequest_When_ServerHasSleep(t *testing.T) {
 			request := tt.argsFn(tt.args.method, serverUrl, bytes.NewReader(dataBytes))
 			got, err := r.Do(c, request, dataBytes)
 
-			shouldbeMatchedRetried(t, tt.retried, r.GetRetry())
+			shouldbeMatchedRetried(t, tt.retried, r.retried)
 			if (err != nil) != tt.wantError {
 				t.Errorf("%v", err)
 				return
@@ -368,7 +368,7 @@ func TestRetry_RetryRequest_When_ServerStatusCode500(t *testing.T) {
 			request := tt.argsFn(tt.args.method, serverUrl, bytes.NewReader(dataBytes))
 			got, err := r.Do(c, request, dataBytes)
 
-			shouldbeMatchedRetried(t, tt.retried, r.GetRetry())
+			shouldbeMatchedRetried(t, tt.retried, r.retried)
 			if (err != nil) != tt.wantError {
 				t.Errorf("%v", err)
 				return
@@ -561,7 +561,7 @@ func TestRetry_RetryRequest_When_ServerHasSleep_But_LastRequestNoSleep(t *testin
 
 			request := tt.argsFn(tt.args.method, server.URL, bytes.NewReader(dataBytes))
 			got, err := r.Do(c, request, dataBytes)
-			shouldbeMatchedRetried(t, tt.retried, r.GetRetry())
+			shouldbeMatchedRetried(t, tt.retried, r.retried)
 			if (err != nil) != tt.wantError {
 				t.Errorf("%v", err)
 				return
@@ -673,7 +673,7 @@ func TestRetry_RetryRequest_When_UnknownUrl(t *testing.T) {
 			request := tt.argsFn(tt.args.method, tt.manualServerUrl, bytes.NewReader(dataBytes))
 			_, err := r.Do(c, request, dataBytes)
 
-			shouldbeMatchedRetried(t, tt.retried, r.GetRetry())
+			shouldbeMatchedRetried(t, tt.retried, r.retried)
 			if (err != nil) != tt.wantError {
 				t.Errorf("%v", err)
 				return

@@ -66,14 +66,6 @@ func (r *Retry) ShouldRetry(result *RetryResult) bool {
 	return isError
 }
 
-func (r *Retry) GetRetry() int {
-	if 1 < r.retried {
-		return r.retried
-	}
-
-	return r.retried
-}
-
 func (r *Retry) retry(client *http.Client, request *http.Request, originalBody []byte) (*http.Response, error) {
 	result := &RetryResult{
 		Response: nil,
