@@ -88,8 +88,11 @@ func (ws wrapperStruct) requestHandler(w http.ResponseWriter, r *http.Request) {
 			client.WithUrl(ws.client.BaseUrl, "/wait"),
 		),
 	).WithRetry(client.Retry{
-		RetryInterval: 100,
-		RetryMax:      3,
+		Policy: client.RetryPolicy{
+			RetryMax: 3,
+			Base:     100,
+			Cap:      100,
+		},
 	}).Do()
 
 	if err != nil {

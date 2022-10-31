@@ -215,8 +215,11 @@ func TestRetry_RetryRequest_When_ServerHasSleep(t *testing.T) {
 				Timeout: time.Duration(tt.clientTimeoutMs) * time.Millisecond,
 			}
 			r := &Retry{
-				RetryInterval: tt.fields.RetryInterval,
-				RetryMax:      tt.fields.RetryMax,
+				Policy: RetryPolicy{
+					RetryMax: tt.fields.RetryMax,
+					Base:     tt.fields.RetryInterval,
+					Cap:      tt.fields.RetryInterval,
+				},
 			}
 			dataBytes, _ := json.Marshal(tt.args.data)
 			serverUrl := server.URL
@@ -359,8 +362,11 @@ func TestRetry_RetryRequest_When_ServerStatusCode500(t *testing.T) {
 				Timeout: time.Duration(tt.clientTimeoutMs) * time.Millisecond,
 			}
 			r := &Retry{
-				RetryInterval: tt.fields.RetryInterval,
-				RetryMax:      tt.fields.RetryMax,
+				Policy: RetryPolicy{
+					RetryMax: tt.fields.RetryMax,
+					Base:     tt.fields.RetryInterval,
+					Cap:      tt.fields.RetryInterval,
+				},
 			}
 			dataBytes, _ := json.Marshal(tt.args.data)
 			serverUrl := server.URL
@@ -554,8 +560,11 @@ func TestRetry_RetryRequest_When_ServerHasSleep_But_LastRequestNoSleep(t *testin
 				Timeout: time.Duration(tt.clientTimeoutMs) * time.Millisecond,
 			}
 			r := &Retry{
-				RetryInterval: tt.fields.RetryInterval,
-				RetryMax:      tt.fields.RetryMax,
+				Policy: RetryPolicy{
+					RetryMax: tt.fields.RetryMax,
+					Base:     tt.fields.RetryInterval,
+					Cap:      tt.fields.RetryInterval,
+				},
 			}
 			dataBytes, _ := json.Marshal(tt.args.data)
 
@@ -665,8 +674,11 @@ func TestRetry_RetryRequest_When_UnknownUrl(t *testing.T) {
 				Timeout: time.Duration(tt.clientTimeoutMs) * time.Millisecond,
 			}
 			r := &Retry{
-				RetryInterval: tt.fields.RetryInterval,
-				RetryMax:      tt.fields.RetryMax,
+				Policy: RetryPolicy{
+					RetryMax: tt.fields.RetryMax,
+					Base:     tt.fields.RetryInterval,
+					Cap:      tt.fields.RetryInterval,
+				},
 			}
 			dataBytes, _ := json.Marshal(tt.args.data)
 

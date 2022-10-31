@@ -9,10 +9,8 @@ import (
 )
 
 type Retry struct {
-	RetryInterval int
-	RetryMax      int
-
 	retried int
+	Policy  RetryPolicy
 }
 
 type RetryResult struct {
@@ -40,7 +38,7 @@ func (r *Retry) Do(client *http.Client, request *http.Request, originalBody []by
 func (r *Retry) ShouldRetry(result *RetryResult) bool {
 	var isError bool
 
-	if r.RetryMax < 1 {
+	if r.Policy.RetryMax < 1 {
 		return isError
 	}
 
@@ -84,8 +82,9 @@ func (r *Retry) retry(client *http.Client, request *http.Request, originalBody [
 
 	go doFn(client, request)
 
+	sleep := r.Policy.CalcuateSleep(r.retried, r.Policy.Base)
 	// https://github.com/golang/go/issues/19653
-	for r.retried = 0; r.retried < r.RetryMax; r.retried++ {
+	for r.retried = 0; r.retried < r.Policy.RetryMax; r.retried++ {
 		select {
 		case result = <-ch:
 			if !r.ShouldRetry(result) {
@@ -116,7 +115,7 @@ func (r *Retry) retry(client *http.Client, request *http.Request, originalBody [
 			// 	return io.NopCloser(bytes.NewBuffer(originalBody)), nil
 			// }
 			doFn(client, request)
-		case <-time.After(time.Duration(r.RetryInterval) * time.Millisecond):
+		case <-time.After(time.Duration(sleep) * time.Millisecond):
 		}
 	}
 
