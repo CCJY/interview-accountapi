@@ -33,7 +33,8 @@ func getAccountClient() AccountClientInterface {
 	ccjyclient := client.NewClient(
 		client.WithTransport(transport),
 		client.WithBaseUrl(getHostNmae()),
-		client.WithTimeout(3))
+		// client.WithTimeout(300)
+	)
 
 	return New(ccjyclient)
 }

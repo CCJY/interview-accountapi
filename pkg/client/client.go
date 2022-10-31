@@ -36,9 +36,12 @@ func WithBaseUrl(baseUrl string) ClientOpt {
 	}
 }
 
+// The param timeout should be milliseconds.
+//
+// if 30 milliseconds, timeout's value is 30.
 func WithTimeout(timeout int) ClientOpt {
 	return func(c *Client) {
-		c.Timeout = time.Duration(timeout) * time.Second
+		c.Timeout = time.Duration(timeout) * time.Millisecond
 	}
 }
 
