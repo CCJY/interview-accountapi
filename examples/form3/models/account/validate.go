@@ -2,6 +2,7 @@ package account
 
 import (
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"regexp"
 	"time"
@@ -54,58 +55,6 @@ func IsBankAccountNumber(fl validator.FieldLevel) bool {
 	return BankAccountNumberRegex.MatchString(fl.Field().String())
 }
 
-// http://ht5ifv.serprest.pt/extensions/tools/IBAN/index.html
-func IsIBAN(fl validator.FieldLevel) bool {
-	regex := "^GB\\d{2}[A-Z]{4}\\d{14}$"
-	account, ok := fl.Parent().Interface().(AccountAttributes)
-	if ok {
-
-		switch account.Country {
-		case "AU":
-			return fl.Field().Interface() == nil
-		case "BE":
-			regex = "^BE\\d{14}$"
-		case "CA":
-			return fl.Field().Interface() == nil
-		case "EE":
-			regex = "^EE\\d{18}$"
-		case "FI":
-			regex = "^FI\\d{16}$"
-		case "FR":
-			regex = "^FR\\d{12}[0-9A-Z]{11}\\d{2}$"
-		case "DE":
-			regex = "^DE\\d{20}$"
-		case "GR":
-			regex = "^GR\\d{9}[0-9A-Z]{16}$"
-		case "HK":
-			return fl.Field().Interface() == nil
-		case "IE":
-			regex = "^IE\\d{2}[A-Z]{4}\\d{14}$"
-		case "IT":
-			regex = "^IT\\d{2}[A-Z]\\d{10}[0-9A-Z]{12}$"
-		case "LU":
-			regex = "^LU\\d{5}[0-9A-Z]{13}$"
-		case "NL":
-			regex = "^NL\\d{2}[A-Z]{4}\\d{10}$"
-		case "PT":
-			regex = "^PT\\d{23}$"
-		case "ES":
-			regex = "^ES\\d{22}$"
-		case "SE":
-			regex = "^SE\\d{22}$"
-		case "CH":
-			regex = "^CH\\d{7}[0-9A-Z]{12}$"
-		case "US":
-			return fl.Field().Interface() == nil
-		case "GB":
-			regex = "^GB\\d{2}[A-Z]{4}\\d{14}$"
-		}
-	}
-
-	IBANRegex := regexp.MustCompile(regex)
-	return IBANRegex.MatchString(fl.Field().String())
-}
-
 func IsReferenceMask(fl validator.FieldLevel) bool {
 	regex := "^[#$?\\\\]{1,35}?$"
 	ReferenceMaskRegex := regexp.MustCompile(regex)
@@ -113,25 +62,33 @@ func IsReferenceMask(fl validator.FieldLevel) bool {
 	return ReferenceMaskRegex.MatchString(fl.Field().String())
 }
 
-func NewValidator() *validator.Validate {
-	var validator = validator.New()
-	validator.RegisterCustomTypeFunc(func(field reflect.Value) interface{} {
+type AccountValidator struct {
+	validate *validator.Validate
+	trans    ut.Translator
+}
+
+func NewAccountValidator() *AccountValidator {
+	eng := en.New()
+	uni := ut.New(eng, eng)
+	trans, _ := uni.GetTranslator("en")
+	v := &AccountValidator{
+		validate: validator.New(),
+		trans:    trans,
+	}
+	v.validate.RegisterCustomTypeFunc(func(field reflect.Value) interface{} {
 		if valuer, ok := field.Interface().(uuid.UUID); ok {
 			return valuer.String()
 		}
 		return nil
 	}, uuid.UUID{})
 
-	eng := en.New()
-	uni := ut.New(eng, eng)
-	trans, _ := uni.GetTranslator("en")
-
 	// CustomerRegister(validator, trans, "swift_code", "", IsSWiftCode)
-	CustomerRegister(validator, trans, "bank_account_number", "{0}{1}", IsBankAccountNumber)
-	CustomerRegister(validator, trans, "iban", "{0}{1}", IsIBAN)
+	CustomerRegister(v.validate, trans, "bank_account_number", "{0}{1}", IsBankAccountNumber)
+	CustomerRegister(v.validate, trans, "iban", "{0} {1}", IsIBAN)
 	// CustomerRegister(validator, trans, "reference_mask", "", IsReferenceMask)
 
-	return validator
+	v.validate.RegisterStructValidation(v.AccountValidation, &AccountData{})
+	return v
 }
 
 func CustomerRegister(v *validator.Validate, trans ut.Translator, tag string, text string, validFn func(f1 validator.FieldLevel) bool) {
@@ -139,14 +96,22 @@ func CustomerRegister(v *validator.Validate, trans ut.Translator, tag string, te
 	v.RegisterTranslation(tag, trans, func(ut ut.Translator) error {
 		return ut.Add(tag, text, true)
 	}, func(ut ut.Translator, fe validator.FieldError) string {
-		param := fe.Param()
-		tag := fe.Tag()
-
-		t, err := ut.T(tag, fe.Field(), param)
+		t, err := ut.T(fe.Tag(), fe.Field(), fe.Param())
 		if err != nil {
 			return fe.(error).Error()
 		}
 		return t
 	})
 
+}
+func translateError(err error, trans ut.Translator) (errs []error) {
+	if err == nil {
+		return nil
+	}
+	validatorErrs := err.(validator.ValidationErrors)
+	for _, e := range validatorErrs {
+		translatedErr := fmt.Errorf(e.Translate(trans))
+		errs = append(errs, translatedErr)
+	}
+	return errs
 }

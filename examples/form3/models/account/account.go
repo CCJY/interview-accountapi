@@ -49,7 +49,7 @@ type AccountAttributes struct {
 	Country string `json:"country" validate:"required,iso3166_1_alpha2"`
 
 	// IBAN of the account. Generated if not provided.
-	Iban *string `json:"iban,omitempty" validate:"omitempty,iban"`
+	Iban *string `json:"iban,omitempty" validate:"omitempty"`
 
 	// Flag to indicate if the account is a joint account, set to true if this is a joint account. Defaults to false if not provided. Only used for Confirmation of Payee.
 	JointAccount *bool `json:"joint_account,omitempty"`
