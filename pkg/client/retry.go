@@ -70,6 +70,8 @@ func (r *Retry) retry(client *http.Client, request *http.Request, originalBody [
 		Error:    fmt.Errorf("failed all the requests"),
 	}
 	ch := make(chan *RetryResult, 1)
+	// Ensure channel close
+	defer close(ch)
 
 	doFn := func(c *http.Client, req *http.Request) {
 		got, err := c.Do(req)
