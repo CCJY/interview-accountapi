@@ -19,50 +19,93 @@ const (
 	RetryPolicyExpoDecorrJitter RetryPolicyName = "ExpoDecorrjitter"
 )
 
+type RetryPolicyOpt func(*Retry)
+
+var DefaultRetryPolicy = &RetryPolicy{
+	PolicyName: RetryPolicyNoBackOff,
+	Base:       3000, // milliseconds, 3 seconds
+	RetryMax:   3,
+}
+
+func WithRetryPolicyNoBackOff(base, retryMax int) RetryPolicyOpt {
+	return func(r *Retry) {
+		r.Policy.PolicyName = RetryPolicyNoBackOff
+		r.Policy.Base = base
+		r.Policy.RetryMax = retryMax
+	}
+}
+
+func WithRetryPolicyExpoBackOff(base, cap, retryMax int) RetryPolicyOpt {
+	return func(r *Retry) {
+		r.Policy.PolicyName = RetryPolicyExpoBackOff
+		r.Policy.Base = base
+		r.Policy.Cap = cap
+		r.Policy.RetryMax = retryMax
+	}
+}
+
+func WithRetryPolicyExpoFullyBackOff(base, cap, retryMax int) RetryPolicyOpt {
+	return func(r *Retry) {
+		r.Policy.PolicyName = RetryPolicyExpoFullyJitter
+		r.Policy.Base = base
+		r.Policy.Cap = cap
+		r.Policy.RetryMax = retryMax
+	}
+}
+
+func WithRetryPolicyExpoDecorrJitter(base, cap, retryMax int) RetryPolicyOpt {
+	return func(r *Retry) {
+		r.Policy.PolicyName = RetryPolicyExpoDecorrJitter
+		r.Policy.Base = base
+		r.Policy.Cap = cap
+		r.Policy.RetryMax = retryMax
+	}
+}
+
 type RetryPolicy struct {
-	base       int
-	cap        int
+	RetryMax   int
+	Base       int
+	Cap        int
 	PolicyName RetryPolicyName
 }
 
 func (p *RetryPolicy) CalcuateSleep(retried int, sleep int) int {
 	switch p.PolicyName {
 	case RetryPolicyExpoBackOff:
-		return p.ExpoBackOff(retried)
-	case RetryPolicyExpoDecorrJitter:
-		return p.ExpoDecorrJitter(sleep)
+		return p.expoBackOff(retried)
 	case RetryPolicyExpoEqualJitter:
-		return p.ExpoEqualJitter(sleep)
+		return p.expoEqualJitter(retried)
 	case RetryPolicyExpoFullyJitter:
-		return p.ExpoFullyJitter(sleep)
+		return p.expoFullyJitter(retried)
+	case RetryPolicyExpoDecorrJitter:
+		return p.expoDecorrJitter(sleep)
 	default:
 		return p.NoBackOff()
 	}
 
 }
 
-func (p *RetryPolicy) ExpoBackOff(retried int) int {
-	v := math.Pow(2, float64(retried)) * float64(p.base)
-	return int(math.Min(float64(p.cap), v))
+func (p *RetryPolicy) expoBackOff(retried int) int {
+	v := math.Pow(2, float64(retried)) * float64(p.Base)
+	return int(math.Min(float64(p.Cap), v))
 }
 
 func (b *RetryPolicy) NoBackOff() int {
-	return b.base
+	return b.Base
 }
 
-func (b *RetryPolicy) ExpoEqualJitter(retried int) int {
-	backOff := b.ExpoBackOff(retried)
-	j := backOff / 2
-	sleep := j + rand.Intn(j)
+func (b *RetryPolicy) expoEqualJitter(retried int) int {
+	backOff := b.expoBackOff(retried)
+	sleep := backOff/2 + rand.Intn(backOff/2)
 	return sleep
 }
 
-func (b *RetryPolicy) ExpoFullyJitter(retried int) int {
-	backOff := b.ExpoBackOff(retried)
+func (b *RetryPolicy) expoFullyJitter(retried int) int {
+	backOff := b.expoBackOff(retried)
 	sleep := rand.Intn(backOff)
 	return sleep
 }
 
-func (b *RetryPolicy) ExpoDecorrJitter(sleep int) int {
-	return int(math.Min(float64(b.cap), float64(b.base)+float64(rand.Intn(sleep*3-b.base))))
+func (b *RetryPolicy) expoDecorrJitter(sleep int) int {
+	return int(math.Min(float64(b.Cap), float64(b.Base+rand.Intn(sleep*3-b.Base))))
 }

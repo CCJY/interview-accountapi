@@ -97,7 +97,7 @@ type RequestContext[T any] struct {
 	// RetryInterval: 300
 	// RetryMax: 3
 	// }
-	Retry Retry
+	Retry *Retry
 
 	// It is related to Retry for reusing a request.
 	originalBody []byte
@@ -226,8 +226,10 @@ func (r *RequestContext[T]) WithContext(ctx context.Context) RequestInterface[T]
 	return r
 }
 
-func (r *RequestContext[T]) WithRetry(retry Retry) RequestInterface[T] {
-	r.Retry = retry
+func (r *RequestContext[T]) WithRetry(opts ...RetryPolicyOpt) RequestInterface[T] {
+	for _, opt := range opts {
+		opt(r.Retry)
+	}
 
 	return r
 }
@@ -241,7 +243,9 @@ type RequestInterface[T any] interface {
 	// on the client's timeout or context.
 	// When failed at the first time, it will retry the request as much as
 	// the RetryMax value of Retry when call Do function.
-	WithRetry(retry Retry) RequestInterface[T]
+	// If uses this WithRetry without options, it will be set by DefaultSetting.
+	// DefaultRetry is the default implementation of Retry and is used by RetryPolicyNoBackOff.
+	WithRetry(opts ...RetryPolicyOpt) RequestInterface[T]
 
 	// When using WhenBeforeDo, it can modify a http.Request.
 	WhenBeforeDo(func(*RequestContext[T]) error) RequestInterface[T]
@@ -287,6 +291,11 @@ func NewRequestContext[T any](client *Client, contextModel *RequestContextModel)
 			Header:         contextModel.Header,
 			Body:           contextModel.Body,
 			CustomEncoding: contextModel.Encoding,
+			Retry: &Retry{
+				Policy: &RetryPolicy{
+					RetryMax: 0,
+				},
+			},
 		},
 	)
 }
