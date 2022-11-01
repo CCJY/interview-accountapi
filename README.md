@@ -60,10 +60,9 @@ fmt.Println(got.ContextData.Data.Id)
 - This can be used if a retry is required. Additionally, you can set a retry when you create the Client.
 ```go
 got, err = client.NewCreateAccountRequest(&reqData).
-            WithRetry(client.Retry{
-            RetryInterval: r.retryWaitMs,
-            RetryMax:      r.retryAttempts,
-            }).Do()
+            WithRetry(
+		        client.WithRetryPolicyExpoFullyBackOff(100, 300, 3),
+            ).Do()
 ```
 
 - This is used when using context.
