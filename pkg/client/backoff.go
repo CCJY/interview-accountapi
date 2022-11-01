@@ -19,6 +19,49 @@ const (
 	RetryPolicyExpoDecorrJitter RetryPolicyName = "ExpoDecorrjitter"
 )
 
+type RetryPolicyOpt func(*Retry)
+
+var DefaultRetryPolicy = &RetryPolicy{
+	PolicyName: RetryPolicyNoBackOff,
+	Base:       3000, // milliseconds, 3 seconds
+	RetryMax:   3,
+}
+
+func WithRetryPolicyNoBackOff(base, retryMax int) RetryPolicyOpt {
+	return func(r *Retry) {
+		r.Policy.PolicyName = RetryPolicyNoBackOff
+		r.Policy.Base = base
+		r.Policy.RetryMax = retryMax
+	}
+}
+
+func WithRetryPolicyExpoBackOff(base, cap, retryMax int) RetryPolicyOpt {
+	return func(r *Retry) {
+		r.Policy.PolicyName = RetryPolicyExpoBackOff
+		r.Policy.Base = base
+		r.Policy.Cap = cap
+		r.Policy.RetryMax = retryMax
+	}
+}
+
+func WithRetryPolicyExpoFullyBackOff(base, cap, retryMax int) RetryPolicyOpt {
+	return func(r *Retry) {
+		r.Policy.PolicyName = RetryPolicyExpoFullyJitter
+		r.Policy.Base = base
+		r.Policy.Cap = cap
+		r.Policy.RetryMax = retryMax
+	}
+}
+
+func WithRetryPolicyExpoDecorrJitter(base, cap, retryMax int) RetryPolicyOpt {
+	return func(r *Retry) {
+		r.Policy.PolicyName = RetryPolicyExpoDecorrJitter
+		r.Policy.Base = base
+		r.Policy.Cap = cap
+		r.Policy.RetryMax = retryMax
+	}
+}
+
 type RetryPolicy struct {
 	RetryMax   int
 	Base       int

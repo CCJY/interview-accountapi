@@ -35,21 +35,13 @@ func (r *AccountClientFeature) iCallTheMethodNewCreateAccountRequestWithParams(a
 	if 0 < r.timeoutMs {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeoutMs)*time.Millisecond)
 		defer cancel()
-		got, err = Client.NewCreateAccountRequest(&reqData).WithRetry(client.Retry{
-			Policy: client.RetryPolicy{
-				RetryMax: r.retryAttempts,
-				Base:     r.retryWaitMs,
-				Cap:      r.retryWaitMs,
-			},
-		}).WithContext(ctx).Do()
+		got, err = Client.NewCreateAccountRequest(&reqData).WithRetry(
+			client.WithRetryPolicyNoBackOff(r.retryWaitMs, r.retryAttempts),
+		).WithContext(ctx).Do()
 	} else {
-		got, err = Client.NewCreateAccountRequest(&reqData).WithRetry(client.Retry{
-			Policy: client.RetryPolicy{
-				RetryMax: r.retryAttempts,
-				Base:     r.retryWaitMs,
-				Cap:      r.retryWaitMs,
-			},
-		}).Do()
+		got, err = Client.NewCreateAccountRequest(&reqData).WithRetry(
+			client.WithRetryPolicyNoBackOff(r.retryWaitMs, r.retryAttempts),
+		).Do()
 	}
 
 	if err != nil {

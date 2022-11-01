@@ -10,7 +10,7 @@ import (
 
 type Retry struct {
 	retried int
-	Policy  RetryPolicy
+	Policy  *RetryPolicy
 }
 
 type RetryResult struct {

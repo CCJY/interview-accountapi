@@ -220,7 +220,7 @@ func TestRetry_RetryRequest_When_ServerHasSleep(t *testing.T) {
 				Timeout: time.Duration(tt.clientTimeoutMs) * time.Millisecond,
 			}
 			r := &Retry{
-				Policy: RetryPolicy{
+				Policy: &RetryPolicy{
 					RetryMax: tt.fields.RetryMax,
 					Base:     tt.fields.RetryInterval,
 					Cap:      tt.fields.RetryInterval,
@@ -376,7 +376,7 @@ func TestRetry_RetryRequest_When_ServerStatusCode500(t *testing.T) {
 				Timeout: time.Duration(tt.clientTimeoutMs) * time.Millisecond,
 			}
 			r := &Retry{
-				Policy: RetryPolicy{
+				Policy: &RetryPolicy{
 					RetryMax: tt.fields.RetryMax,
 					Base:     tt.fields.RetryInterval,
 					Cap:      tt.fields.RetryInterval,
@@ -583,7 +583,7 @@ func TestRetry_RetryRequest_When_ServerHasSleep_But_LastRequestNoSleep(t *testin
 				Timeout: time.Duration(tt.clientTimeoutMs) * time.Millisecond,
 			}
 			r := &Retry{
-				Policy: RetryPolicy{
+				Policy: &RetryPolicy{
 					RetryMax: tt.fields.RetryMax,
 					Base:     tt.fields.RetryInterval,
 					Cap:      tt.fields.RetryInterval,
@@ -707,7 +707,7 @@ func TestRetry_RetryRequest_When_UnknownUrl(t *testing.T) {
 				Timeout: time.Duration(tt.clientTimeoutMs) * time.Millisecond,
 			}
 			r := &Retry{
-				Policy: RetryPolicy{
+				Policy: &RetryPolicy{
 					RetryMax: tt.fields.RetryMax,
 					Base:     tt.fields.RetryInterval,
 					Cap:      tt.fields.RetryInterval,
@@ -991,7 +991,7 @@ func TestRetry_RetryRequest_Given_Jitter_When_ServerHasSleep_But_LastRequestNoSl
 				Timeout: time.Duration(tt.clientTimeoutMs) * time.Millisecond,
 			}
 			r := &Retry{
-				Policy: RetryPolicy{
+				Policy: &RetryPolicy{
 					PolicyName: tt.fields.PolicyName,
 					RetryMax:   tt.fields.RetryMax,
 					Base:       tt.fields.Base,
