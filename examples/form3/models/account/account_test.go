@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ccjy/interview-accountapi/examples/form3/commons"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 )
@@ -75,7 +74,7 @@ func TestValidateDataId(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			validate := commons.NewValidator()
+			validate := NewValidator()
 
 			err := validate.Struct(tt.data)
 
@@ -116,7 +115,7 @@ func TestValidateDataOrganisationId(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			validate := commons.NewValidator()
+			validate := NewValidator()
 
 			err := validate.Struct(tt.data)
 
@@ -157,7 +156,7 @@ func TestValidateDataAttributesBankId(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			validate := commons.NewValidator()
+			validate := NewValidator()
 
 			err := validate.Struct(tt.data)
 
@@ -198,7 +197,7 @@ func TestValidateDataAttributesBankIdCode(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			validate := commons.NewValidator()
+			validate := NewValidator()
 
 			err := validate.Struct(tt.data)
 
@@ -247,7 +246,7 @@ func TestValidateDataAttributesBIC(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			validate := commons.NewValidator()
+			validate := NewValidator()
 
 			err := validate.Struct(tt.data)
 
@@ -287,7 +286,7 @@ func TestValidateDataAttributesCountry(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			validate := commons.NewValidator()
+			validate := NewValidator()
 
 			err := validate.Struct(tt.data)
 
@@ -319,7 +318,7 @@ func TestValidateDataAttributesAccountClassification(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			validate := commons.NewValidator()
+			validate := NewValidator()
 
 			err := validate.Struct(tt.data)
 			if (err != nil) != tt.wantErr {
@@ -358,7 +357,7 @@ func TestValidateDataAttributesAccountNumber(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			validate := commons.NewValidator()
+			validate := NewValidator()
 
 			err := validate.Struct(tt.data)
 
@@ -408,7 +407,7 @@ func TestValidateDataAttributesAlternativeNames(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			validate := commons.NewValidator()
+			validate := NewValidator()
 
 			err := validate.Struct(tt.data)
 
@@ -441,7 +440,7 @@ func TestValidateDataAttributesCurrency(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			validate := commons.NewValidator()
+			validate := NewValidator()
 
 			err := validate.Struct(tt.data)
 
@@ -479,10 +478,51 @@ func TestValidateDataAttributesIban(t *testing.T) {
 			}(),
 			wantErr: false,
 		},
+		{
+			name: "No Error",
+			data: func() *AccountData {
+				accountData := DefaultAccountData()
+				accountData.Attributes.Country = "GB"
+				accountData.Attributes.Iban = lo.ToPtr("GB11NWBK40030041426811")
+				return accountData
+			}(),
+			wantErr: false,
+		},
+		{
+			name: "No Error",
+			data: func() *AccountData {
+				accountData := DefaultAccountData()
+				accountData.Attributes.Country = "GB"
+				return accountData
+			}(),
+			wantErr: false,
+		},
+		{
+			name: "No Error",
+			data: func() *AccountData {
+				accountData := DefaultAccountData()
+				accountData.Attributes.Country = "AU"
+				// Has to be empty
+				accountData.Attributes.Iban = lo.ToPtr("GB11NWBK40030041426811")
+				return accountData
+			}(),
+			wantErr: true,
+		},
+		{
+			name: "No Error",
+			data: func() *AccountData {
+				accountData := DefaultAccountData()
+				accountData.Attributes.Country = "AU"
+				// Has to be empty
+				accountData.Attributes.Iban = nil
+				return accountData
+			}(),
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			validate := commons.NewValidator()
+			validate := NewValidator()
 
 			err := validate.Struct(tt.data)
 
@@ -540,7 +580,7 @@ func TestValidateDataAttributesName(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			validate := commons.NewValidator()
+			validate := NewValidator()
 
 			err := validate.Struct(tt.data)
 			if (err != nil) != tt.wantErr {
@@ -587,7 +627,7 @@ func TestValidateDataAttributesSecondaryIdentification(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			validate := commons.NewValidator()
+			validate := NewValidator()
 
 			err := validate.Struct(tt.data)
 
@@ -642,7 +682,7 @@ func TestValidateDataAttributesStatus(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			validate := commons.NewValidator()
+			validate := NewValidator()
 
 			err := validate.Struct(tt.data)
 
