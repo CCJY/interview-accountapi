@@ -82,9 +82,10 @@ func (r *Retry) retry(client *http.Client, request *http.Request, originalBody [
 
 	go doFn(client, request)
 
-	sleep := r.Policy.CalcuateSleep(r.retried, r.Policy.Base)
+	sleep := r.Policy.Base
 	// https://github.com/golang/go/issues/19653
 	for r.retried = 0; r.retried < r.Policy.RetryMax; r.retried++ {
+		sleep = r.Policy.CalcuateSleep(r.retried, sleep)
 		select {
 		case result = <-ch:
 			if !r.ShouldRetry(result) {
