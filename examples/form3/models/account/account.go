@@ -67,7 +67,7 @@ type AccountAttributes struct {
 	SecondaryIdentification *string `json:"secondary_identification,omitempty" validate:"omitempty,max=140"`
 
 	// Status of the account. pending and confirmed are set by Form3, closed can be set manually.
-	Status *Status `json:"status,omitempty" validate:"omitempty,oneof='closed'"`
+	Status *AccountStatus `json:"status,omitempty" validate:"omitempty,oneof='closed'"`
 
 	// Flag to indicate if the account has been switched away from this organisation, only used for Confirmation of Payee.
 	//
@@ -88,9 +88,9 @@ const (
 
 // Defines values for AccountAttributesStatus.
 const (
-	StatusClosed    Status = "closed"
-	StatusConfirmed Status = "confirmed"
-	StatusPending   Status = "pending"
+	StatusClosed    AccountStatus = "closed"
+	StatusConfirmed AccountStatus = "confirmed"
+	StatusPending   AccountStatus = "pending"
 )
 
 // ISO 4217 code  used to identify the base currency of the account. Must be GBP.
@@ -100,4 +100,4 @@ type BaseCurrency string
 type AccountClassification string
 
 // Status of the account. pending and confirmed are set by Form3, closed can be set manually.
-type Status string
+type AccountStatus string
