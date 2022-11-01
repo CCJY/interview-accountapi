@@ -894,6 +894,44 @@ func TestRetry_RetryRequest_Given_Jitter_When_ServerHasSleep_But_LastRequestNoSl
 			fields: fields{
 				PolicyName: RetryPolicyExpoBackOff,
 				Base:       100,
+				Cap:        200,
+				RetryMax:   3,
+			},
+			args: &args{
+				method: "GET",
+				data:   nil,
+			},
+			argsFn: func(method, url string, r io.Reader) *http.Request {
+				req, _ := http.NewRequest(method, url, r)
+
+				return req
+			},
+			respDataWhenRetry: &TestServerResponse{
+				Data:         nil,
+				ErrorMessage: nil,
+			},
+			want: &TestServerResponse{
+				Data:         nil,
+				ErrorMessage: nil,
+			},
+			wantStatusCode:    200,
+			serverSleepTimeMs: 500,
+			clientTimeoutMs:   200,
+			retried:           3,
+			triggerRetry:      true,
+		},
+
+		// Given Server's sleep 300ms per a request, but it does not sleep at the a last request
+		// And Client's timeout 200ms
+		// And NoExpoBackoff
+		// And data is nil
+		// Then OK
+		// Then retried is 3
+		{
+			name: "5. should be ok",
+			fields: fields{
+				PolicyName: RetryPolicyNoBackOff,
+				Base:       100,
 				Cap:        100,
 				RetryMax:   3,
 			},
