@@ -7,6 +7,19 @@ I started Go for the first time. It was interesting because it was a little diff
 
 For more details, I have used the latest version of Golang (1.19) and tried to make it general for other projects. The sources in the pkg/client are general library, and the Form3 client in the examples is the result of using them. When I made this project, as I am starting Go for the first time, I decided to try generic programming supported from 1.18. I tried to make the request and response data generic. In addition, I included my app in `docker-compose.yml` and passed the tests I implemented by docker-compose up.
 
+
+# Result
+
+If you're just starting out, the form3-fake-accountapi is a good resource. It definitely seems to help when studying Golang. This project took about 2 weeks. It was a time to study Golang and get to know various patterns used in Golang. It's my first time using Golang, so I've been trying to do a lot of things with my own greed. Actually, my future plan is to template the client library using something like oapi-codegen, create a logging interface, and implement how to do tracing in the cloud environment, but unfortunately, I don't know when I will do it. When I went to the study branch, I made an example template using resty client and oapi-codegen. oapi-codegen has its own template, but I have customized the template. And I also made a very simple Client library in the study branch. Hope this helps someone.
+
+Unfortunately, I couldn't go to the next step.
+After receiving the feedback, I summarized the reasons I thought.
+1. The test cases are unorganized and difficult to read. And the lack of explanation seems to have been a big factor. I thought BDD would be enough to explain, but that was just my opinion because I thought this was documentation enough. I guess I didn't provide a sufficient explanation.
+2. Implementing a generic client library seems complicated. It seems to have been negatively impacted by undesired features. In particular, the retry feature didn't seem appropriate for them to test. They want it to be simple. However, it is difficult to create a simple test case based on a production environment. I think the submission guidelines are a bit confusing. I should have contacted them a lot and asked more about the author's intentions.
+
+In fact, I wanted to receive more feedback, so I opened it. How can I communicate more clearly with my team members using TDD or BDD? And how can these implementations be trusted?
+
+
 # Summary
 
 <details><summary>Directory Structure</summary>
