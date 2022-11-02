@@ -451,15 +451,15 @@ func TestValidateDataAttributesIban(t *testing.T) {
 			}(),
 			wantErr: false,
 		},
-		// {
-		// 	name: "No Error",
-		// 	data: func() *AccountData {
-		// 		accountData := DefaultAccountData()
-		// 		accountData.Attributes.Iban = lo.ToPtr("GB11NWBK40030041426811")
-		// 		return accountData
-		// 	}(),
-		// 	wantErr: false,
-		// },
+		{
+			name: "No Error",
+			data: func() *AccountData {
+				accountData := DefaultAccountData()
+				accountData.Attributes.Iban = lo.ToPtr("GB11NWBK40030041426811")
+				return accountData
+			}(),
+			wantErr: false,
+		},
 		// {
 		// 	name: "No Error",
 		// 	data: func() *AccountData {

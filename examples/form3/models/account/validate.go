@@ -84,8 +84,19 @@ func NewAccountValidator() *AccountValidator {
 
 	// CustomerRegister(validator, trans, "swift_code", "", IsSWiftCode)
 	CustomerRegister(v.validate, trans, "bank_account_number", "{0}{1}", IsBankAccountNumber)
-	CustomerRegister(v.validate, trans, "iban", "{0} {1}", IsIBAN)
+	// CustomerRegister(v.validate, trans, "iban", "{0} {1}", IsIBAN)
 	// CustomerRegister(validator, trans, "reference_mask", "", IsReferenceMask)
+
+	for country, m := range MapAttributeValid {
+		for fieldName, valid := range m {
+			if valid.Regex != nil {
+				CustomerRegister(v.validate, trans, fmt.Sprintf("%s_%s", fieldName, country), "{0} {1}", func(fl validator.FieldLevel) bool {
+					return valid.Regex.MatchString(fl.Field().String())
+				})
+			}
+		}
+
+	}
 
 	v.validate.RegisterStructValidation(v.AccountValidation, &AccountData{})
 	return v
@@ -114,4 +125,12 @@ func translateError(err error, trans ut.Translator) (errs []error) {
 		errs = append(errs, translatedErr)
 	}
 	return errs
+}
+
+type FieldValidation struct {
+	Empty    bool
+	RegexStr string
+	Regex    *regexp.Regexp
+	Error    string
+	subtags  []string
 }
