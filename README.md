@@ -14,7 +14,7 @@ If you're just starting out, the form3-fake-accountapi is a good resource. It de
 
 Unfortunately, I couldn't go to the next step.
 After receiving the feedback, I summarized the reasons I thought.
-1. The test cases are unorganized and difficult to read. And the lack of explanation seems to have been a big factor. I thought BDD would be enough to explain, but that was just my opinion because I thought this was documentation enough. I guess I didn't provide a sufficient explanation. And above all, it seems that the test cases were not sophisticated. There was not enough time to cover everything as the functional implementation increased. I thought I'd take it into consideration because it's kind of the beginning, but that was my idea.
+1. The lack of explanation seems to have been a big factor. I thought BDD would be enough to explain, but that was just my opinion because I thought this was documentation enough. I guess I didn't provide a sufficient explanation.
 2. Implementing a generic client library seems complicated. It seems to have been negatively impacted by undesired features. In particular, the retry feature didn't seem appropriate for them to test. They want it to be simple. However, it is difficult to create a simple test case based on a production environment. I think the submission guidelines are a bit confusing. I should have contacted them a lot and asked more about the author's intentions.
 
 In fact, I wanted to receive more feedback, so I opened it. How can I communicate more clearly with my team members using TDD or BDD? And how can these implementations be trusted?
